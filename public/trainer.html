@@ -654,7 +654,7 @@
       display: flex;
       align-items: center;
       gap: 11px;
-      margin-bottom: auto;
+      margin-bottom: 0;
       font-size: 18px;
       font-weight: 880;
       letter-spacing: -.04em;
@@ -733,6 +733,79 @@
       cursor: pointer;
     }
     .auth-card .primary { margin-top: 4px; }
+    .auth-flow { margin: auto 0; }
+    .auth-step[hidden] { display: none; }
+    .auth-step-head {
+      display: grid;
+      grid-template-columns: 40px 1fr;
+      align-items: start;
+      gap: 11px;
+      margin: 0 0 18px;
+    }
+    .auth-step-head.no-back { grid-template-columns: 1fr; }
+    .auth-step-head h1 { margin: 1px 0 7px; font-size: 31px; }
+    .auth-step-head p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.4; }
+    .auth-back {
+      display: grid;
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      place-items: center;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      font-size: 23px;
+      cursor: pointer;
+    }
+    .auth-actions { display: grid; gap: 9px; }
+    .auth-actions .secondary { width: 100%; }
+    .auth-email-value {
+      display: inline-flex;
+      max-width: 100%;
+      margin: 0 0 14px;
+      padding: 7px 10px;
+      overflow: hidden;
+      color: #596431;
+      background: var(--lime-soft);
+      border-radius: 9px;
+      font-size: 10px;
+      font-weight: 750;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .forgot-link {
+      display: block;
+      width: fit-content;
+      margin: 12px auto 0;
+      padding: 5px;
+      color: #546127;
+      background: transparent;
+      border: 0;
+      font-size: 11px;
+      font-weight: 760;
+      cursor: pointer;
+    }
+    .gender-options {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+    .gender-option {
+      min-height: 42px;
+      padding: 7px 4px;
+      color: var(--muted);
+      background: #f2f4ee;
+      border: 1px solid transparent;
+      border-radius: 11px;
+      font-size: 10px;
+      font-weight: 740;
+      cursor: pointer;
+    }
+    .gender-option.active {
+      color: var(--ink);
+      background: var(--lime-soft);
+      border-color: var(--lime-strong);
+    }
     .auth-note {
       margin: 14px 8px 0;
       color: #94998f;
@@ -912,31 +985,85 @@
       <div class="app">
         <section class="screen auth-screen active" data-screen="auth">
           <div class="auth-brand"><i class="auth-mark">F</i><span>FORMA</span></div>
-          <div class="auth-copy">
-            <h1 id="authTitle">С возвращением</h1>
-            <p id="authSubtitle">Войдите, чтобы продолжить тренировочный цикл.</p>
-          </div>
-          <article class="card auth-card">
-            <div class="auth-tabs" role="tablist">
-              <button class="auth-tab active" type="button" data-auth-mode="login">Вход</button>
-              <button class="auth-tab" type="button" data-auth-mode="register">Регистрация</button>
-            </div>
-            <form id="authForm" novalidate>
-              <label class="auth-field">
-                <span>Почта</span>
-                <input id="authEmail" type="email" inputmode="email" autocomplete="email" placeholder="name@example.com">
-              </label>
-              <label class="auth-field">
-                <span>Пароль</span>
-                <div class="password-wrap">
-                  <input id="authPassword" type="password" autocomplete="current-password" placeholder="Не менее 6 символов">
-                  <button class="password-toggle" id="passwordToggle" type="button">Показать</button>
+          <div class="auth-flow">
+            <div class="auth-step" data-auth-step="email">
+              <div class="auth-step-head no-back">
+                <div><h1>Введите почту</h1><p>Она понадобится для входа и сохранения прогресса.</p></div>
+              </div>
+              <article class="card auth-card">
+                <label class="auth-field">
+                  <span>Почта</span>
+                  <input id="authEmail" type="email" inputmode="email" autocomplete="email" placeholder="name@example.com">
+                </label>
+                <div class="auth-actions">
+                  <button class="primary" id="loginStart" type="button">Войти</button>
+                  <button class="secondary" id="registerStart" type="button">Регистрация</button>
                 </div>
-              </label>
-              <button class="primary" id="authSubmit" type="submit">Войти</button>
-            </form>
-            <p class="auth-note" id="authNote">Для входа нужны только почта и пароль.</p>
-          </article>
+              </article>
+            </div>
+
+            <div class="auth-step" data-auth-step="login" hidden>
+              <div class="auth-step-head">
+                <button class="auth-back" type="button" data-auth-back aria-label="Назад">‹</button>
+                <div><h1>Введите пароль</h1><p>Для входа в ваш аккаунт.</p></div>
+              </div>
+              <article class="card auth-card">
+                <div class="auth-email-value" data-auth-email-value></div>
+                <form id="loginForm" novalidate>
+                  <label class="auth-field">
+                    <span>Пароль</span>
+                    <div class="password-wrap">
+                      <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Ваш пароль">
+                      <button class="password-toggle" type="button" data-password-toggle="loginPassword">Показать</button>
+                    </div>
+                  </label>
+                  <button class="primary" type="submit">Войти</button>
+                  <button class="forgot-link" id="forgotPassword" type="button">Забыли пароль?</button>
+                </form>
+              </article>
+            </div>
+
+            <div class="auth-step" data-auth-step="register" hidden>
+              <div class="auth-step-head">
+                <button class="auth-back" type="button" data-auth-back aria-label="Назад">‹</button>
+                <div><h1>Регистрация</h1><p>Расскажите немного о себе.</p></div>
+              </div>
+              <article class="card auth-card">
+                <div class="auth-email-value" data-auth-email-value></div>
+                <form id="registerForm" novalidate>
+                  <label class="auth-field"><span>Имя</span><input id="registerName" type="text" autocomplete="name" placeholder="Ваше имя"></label>
+                  <div class="auth-field">
+                    <span>Пол</span>
+                    <div class="gender-options">
+                      <button class="gender-option" type="button" data-gender="male">Мужской</button>
+                      <button class="gender-option" type="button" data-gender="female">Женский</button>
+                      <button class="gender-option" type="button" data-gender="unspecified">Не указывать</button>
+                    </div>
+                  </div>
+                  <label class="auth-field"><span>Дата рождения</span><input id="registerBirthdate" type="date"></label>
+                  <label class="auth-field">
+                    <span>Пароль</span>
+                    <div class="password-wrap">
+                      <input id="registerPassword" type="password" autocomplete="new-password" placeholder="Не менее 6 символов">
+                      <button class="password-toggle" type="button" data-password-toggle="registerPassword">Показать</button>
+                    </div>
+                  </label>
+                  <button class="primary" type="submit">Создать аккаунт</button>
+                </form>
+              </article>
+            </div>
+
+            <div class="auth-step" data-auth-step="forgot" hidden>
+              <div class="auth-step-head">
+                <button class="auth-back" type="button" data-auth-back="login" aria-label="Назад">‹</button>
+                <div><h1>Восстановление</h1><p>Отправим ссылку для нового пароля на почту.</p></div>
+              </div>
+              <article class="card auth-card">
+                <div class="auth-email-value" data-auth-email-value></div>
+                <button class="primary" id="sendResetLink" type="button">Отправить ссылку</button>
+              </article>
+            </div>
+          </div>
         </section>
 
         <section class="screen" data-screen="home">
@@ -1171,7 +1298,9 @@
       };
       const state = {
         screen: "auth",
-        authMode: "login",
+        authStage: "email",
+        authEmail: "",
+        gender: null,
         workout: "pull",
         exercise: 0,
         set: 3,
@@ -1214,22 +1343,30 @@
         toastTimer = setTimeout(() => $("#toast").classList.remove("show"), 2100);
       }
 
-      function renderAuthMode() {
-        const registering = state.authMode === "register";
-        $$("[data-auth-mode]").forEach(button => {
-          const active = button.dataset.authMode === state.authMode;
-          button.classList.toggle("active", active);
-          button.setAttribute("aria-selected", String(active));
+      function showAuthStage(stage) {
+        state.authStage = stage;
+        $$("[data-auth-step]").forEach(step => {
+          step.hidden = step.dataset.authStep !== stage;
         });
-        $("#authTitle").textContent = registering ? "Создайте аккаунт" : "С возвращением";
-        $("#authSubtitle").textContent = registering
-          ? "Начните тренировочный цикл и сохраняйте свой прогресс."
-          : "Войдите, чтобы продолжить тренировочный цикл.";
-        $("#authSubmit").textContent = registering ? "Создать аккаунт" : "Войти";
-        $("#authNote").textContent = registering
-          ? "Для регистрации нужны только почта и пароль."
-          : "Для входа нужны только почта и пароль.";
-        $("#authPassword").autocomplete = registering ? "new-password" : "current-password";
+        $$("[data-auth-email-value]").forEach(value => {
+          value.textContent = state.authEmail;
+        });
+        const active = $(`[data-auth-step="${stage}"]`);
+        if (active) {
+          const input = active.querySelector("input");
+          if (input) input.focus();
+        }
+      }
+
+      function beginAuth(stage) {
+        const email = $("#authEmail").value.trim();
+        if (!email || !email.includes("@")) {
+          toast("Введите корректную почту");
+          $("#authEmail").focus();
+          return;
+        }
+        state.authEmail = email;
+        showAuthStage(stage);
       }
 
       function renderExercise() {
@@ -1399,42 +1536,80 @@
         ].join("");
       }
 
-      $$("[data-auth-mode]").forEach(button => button.addEventListener("click", () => {
-        state.authMode = button.dataset.authMode;
-        renderAuthMode();
+      $("#loginStart").addEventListener("click", () => beginAuth("login"));
+      $("#registerStart").addEventListener("click", () => beginAuth("register"));
+      $$("[data-auth-back]").forEach(button => button.addEventListener("click", () => {
+        showAuthStage(button.dataset.authBack || "email");
       }));
-      $("#passwordToggle").addEventListener("click", () => {
-        const password = $("#authPassword");
+      $$("[data-password-toggle]").forEach(button => button.addEventListener("click", () => {
+        const password = $(`#${button.dataset.passwordToggle}`);
         const showing = password.type === "text";
         password.type = showing ? "password" : "text";
-        $("#passwordToggle").textContent = showing ? "Показать" : "Скрыть";
-      });
-      $("#authForm").addEventListener("submit", event => {
+        button.textContent = showing ? "Показать" : "Скрыть";
+      }));
+      $("#loginForm").addEventListener("submit", event => {
         event.preventDefault();
-        const email = $("#authEmail").value.trim();
-        const password = $("#authPassword").value;
-        if (!email || !email.includes("@")) {
-          toast("Введите корректную почту");
-          $("#authEmail").focus();
+        const password = $("#loginPassword").value;
+        if (password.length < 6) {
+          toast("Пароль должен содержать минимум 6 символов");
+          $("#loginPassword").focus();
+          return;
+        }
+        $("#loginPassword").value = "";
+        showScreen("home");
+        toast("Вход выполнен");
+      });
+      $("#forgotPassword").addEventListener("click", () => showAuthStage("forgot"));
+      $("#sendResetLink").addEventListener("click", () => {
+        toast("Ссылка отправлена на почту");
+      });
+      $$("[data-gender]").forEach(button => button.addEventListener("click", () => {
+        state.gender = button.dataset.gender;
+        $$("[data-gender]").forEach(item => {
+          const active = item.dataset.gender === state.gender;
+          item.classList.toggle("active", active);
+          item.setAttribute("aria-pressed", String(active));
+        });
+      }));
+      $("#registerForm").addEventListener("submit", event => {
+        event.preventDefault();
+        const name = $("#registerName").value.trim();
+        const birthdate = $("#registerBirthdate").value;
+        const password = $("#registerPassword").value;
+        if (!name) {
+          toast("Введите имя");
+          $("#registerName").focus();
+          return;
+        }
+        if (!state.gender) {
+          toast("Выберите пол");
+          return;
+        }
+        if (!birthdate) {
+          toast("Укажите дату рождения");
+          $("#registerBirthdate").focus();
           return;
         }
         if (password.length < 6) {
           toast("Пароль должен содержать минимум 6 символов");
-          $("#authPassword").focus();
+          $("#registerPassword").focus();
           return;
         }
-        const message = state.authMode === "register" ? "Аккаунт создан" : "Вход выполнен";
-        $("#authPassword").value = "";
+        $("#registerPassword").value = "";
         showScreen("home");
-        toast(message);
+        toast("Аккаунт создан");
       });
       $("[data-logout]").addEventListener("click", () => {
-        state.authMode = "login";
+        state.authStage = "email";
+        state.authEmail = "";
+        state.gender = null;
         $("#authEmail").value = "";
-        $("#authPassword").value = "";
-        $("#authPassword").type = "password";
-        $("#passwordToggle").textContent = "Показать";
-        renderAuthMode();
+        $("#loginPassword").value = "";
+        $("#registerName").value = "";
+        $("#registerBirthdate").value = "";
+        $("#registerPassword").value = "";
+        $$("[data-gender]").forEach(item => item.classList.remove("active"));
+        showAuthStage("email");
         showScreen("auth");
       });
       $$("[data-go]").forEach(button => button.addEventListener("click", () => showScreen(button.dataset.go)));
@@ -1531,7 +1706,7 @@
         toast("Результат сохранён");
       });
 
-      renderAuthMode();
+      showAuthStage("email");
       renderWorkoutChoice();
       renderPlan();
       renderExercise();
