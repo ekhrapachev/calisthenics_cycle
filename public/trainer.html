@@ -73,7 +73,7 @@
     .brand-mark i:nth-child(3) { background: #aabfff; }
     .top-actions { display: flex; gap: 8px; }
 
-    .ghost, .solid, .finish-btn {
+    .ghost, .solid {
       border: 0;
       border-radius: 13px;
       padding: 11px 15px;
@@ -189,7 +189,7 @@
     .cycle-tab[data-week="2"] { --tone: var(--red); --soft: var(--red-soft); }
     .cycle-tab[data-week="3"] { --tone: var(--green); --soft: var(--green-soft); }
 
-    .workspace { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(280px, .65fr); gap: 20px; align-items: start; }
+    .workspace { display: grid; grid-template-columns: 1fr; align-items: start; }
     .day-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 6px; background: #eef0f4; border-radius: 16px; }
     .day-btn { padding: 13px; color: var(--muted); background: transparent; border: 0; border-radius: 11px; font-weight: 850; }
     .day-btn.active { color: #fff; background: var(--ink); box-shadow: 0 5px 16px rgba(16,27,49,.15); }
@@ -245,44 +245,6 @@
     }
     .step:hover { background: #e3e6eb; }
     .target-chip { display: inline-block; margin-top: 7px; padding: 4px 8px; color: var(--blue); background: var(--blue-soft); border-radius: 8px; font-size: .78rem; font-weight: 780; }
-
-    .side { position: sticky; top: 16px; }
-    .readiness { display: grid; gap: 8px; }
-    .ready-btn {
-      display: grid;
-      grid-template-columns: 12px 1fr;
-      gap: 11px;
-      align-items: start;
-      padding: 13px;
-      text-align: left;
-      color: var(--ink);
-      background: #f7f7f5;
-      border: 2px solid transparent;
-      border-radius: 13px;
-    }
-    .ready-btn i { width: 10px; height: 10px; margin-top: 4px; background: var(--tone); border-radius: 50%; }
-    .ready-btn b { display: block; font-size: .9rem; }
-    .ready-btn span { display: block; margin-top: 2px; color: var(--muted); font-size: .76rem; }
-    .ready-btn.active { border-color: var(--tone); background: var(--soft); }
-    .ready-btn[data-ready="advance"] { --tone: var(--green); --soft: var(--green-soft); }
-    .ready-btn[data-ready="keep"] { --tone: var(--orange); --soft: var(--orange-soft); }
-    .ready-btn[data-ready="regress"] { --tone: var(--red); --soft: var(--red-soft); }
-    .ready-btn[data-ready="pain"] { --tone: var(--purple); --soft: var(--purple-soft); }
-    .recommendation { margin: 12px 0 0; padding: 13px; color: #3e4a60; background: #f0f2f6; border-radius: 12px; font-size: .84rem; }
-    .notes-label { display: block; margin: 20px 0 7px; font-size: .83rem; font-weight: 780; }
-    textarea {
-      width: 100%;
-      min-height: 92px;
-      resize: vertical;
-      padding: 12px;
-      color: var(--ink);
-      background: #fff;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-    }
-    .finish-btn { width: 100%; margin-top: 12px; color: #fff; background: var(--green); }
-    .finish-btn:hover { background: #087e60; }
-    .finish-btn.is-done { color: #075943; background: var(--green-soft); border: 1px solid #8dd8bd; }
 
     .matrix-summary { margin-top: 20px; }
     .matrix-summary > summary {
@@ -349,8 +311,6 @@
       .cycle-card > p { grid-column: 1; }
       .cycle-ring { grid-row: 1 / span 3; grid-column: 2; margin: 0; }
       .cycle-mini { grid-column: 1 / -1; }
-      .side { position: static; }
-      .readiness { grid-template-columns: 1fr 1fr; }
     }
 
     @media (max-width: 680px) {
@@ -371,20 +331,18 @@
       .exercise { grid-template-columns: 1fr; }
       .set-control { text-align: left; }
       .set-value { justify-content: flex-start; }
-      .readiness, .guide-grid { grid-template-columns: 1fr; }
+      .guide-grid { grid-template-columns: 1fr; }
       .guide-item { grid-template-columns: 1fr; gap: 7px; }
       .guide-item small { grid-column: 1; margin-top: 0; }
     }
 
     @media print {
       body { background: #fff; }
-      .top-actions, .date-wrap, .ready-btn, .notes-label, textarea, .finish-btn, .step, .toast { display: none !important; }
+      .top-actions, .date-wrap, .step, .toast { display: none !important; }
       .wrap { width: 100%; }
       .hero { grid-template-columns: 1fr 280px; }
       .hero-main, .cycle-card, .panel, .guide { box-shadow: none; break-inside: avoid; }
       .workspace { grid-template-columns: 1fr; }
-      .side { position: static; }
-      .readiness::before { content: "Памятка: качество техники важнее названия недели."; }
       .guide { break-before: page; }
       .print-only { display: block; }
     }
@@ -475,20 +433,6 @@
         </details>
       </section>
 
-      <aside class="panel side" aria-labelledby="readinessTitle">
-        <div class="panel-head">
-          <div>
-            <h2 id="readinessTitle">3. Выбор ступени</h2>
-            <p>Оцени качество техники сегодня.</p>
-          </div>
-        </div>
-        <div class="readiness" id="readiness"></div>
-        <p class="recommendation" id="recommendation" aria-live="polite"></p>
-
-        <label class="notes-label" for="notes">Заметка к тренировке</label>
-        <textarea id="notes" placeholder="Например: tuck planche уверенно, в последнем подходе просел таз…"></textarea>
-        <button class="finish-btn" id="finishBtn" type="button">Завершить тренировку</button>
-      </aside>
     </div>
 
     <section class="guide" aria-labelledby="guideTitle">
@@ -588,13 +532,6 @@
         { type: "pull", name: "Брусья и подтягивания", steps: "Свой вес → пауза / медленный темп → +2,5–5 кг → постепенное увеличение веса", cue: "Есть запас — добавить вес. Техника плывёт — оставить." }
       ];
 
-      const readinessOptions = [
-        { id: "advance", title: "Чисто + хороший запас", text: "Следующая ступень или немного веса.", recommendation: "Можно попробовать следующую ступень. Если первый рабочий подход теряет качество — вернись к текущей." },
-        { id: "keep", title: "Чисто, но на пределе", text: "Оставить текущую ступень.", recommendation: "Сохрани выбранные прогрессии и закрепи одинаковое качество во всех подходах." },
-        { id: "regress", title: "Форма ломается", text: "Сразу на одну ступень легче.", recommendation: "Упрости прогрессию на одну ступень. Останови подход до технического отказа." },
-        { id: "pain", title: "Боль в суставе", text: "Остановить элемент и заменить.", recommendation: "Не продолжай болезненный элемент. Выбери безболезненную замену; при сохраняющейся боли обратись к специалисту." }
-      ];
-
       const storageKey = "calisthenics-cycle-v1";
       const localDate = () => {
         const now = new Date();
@@ -616,7 +553,7 @@
       const key = (week = state.week, day = state.day) => `${week}-${day}`;
       const session = () => {
         const id = key();
-        if (!state.sessions[id]) state.sessions[id] = { done: {}, progression: {}, readiness: "keep", note: "", complete: false };
+        if (!state.sessions[id]) state.sessions[id] = { done: {}, progression: {} };
         return state.sessions[id];
       };
       const maxSets = value => Number(String(value).split("–").pop());
@@ -633,7 +570,14 @@
         return base;
       };
       const selectedProgression = (exercise, current = session()) =>
-        exercise.progressions.find(item => item.name === current.progression[exercise.id]) || exercise.progressions[0];
+        exercise.progressions.find(item => item.name === (current.progression || {})[exercise.id]) || exercise.progressions[0];
+      const sessionComplete = (week, day) => {
+        const current = state.sessions[`${week}-${day}`];
+        if (!current) return false;
+        return data[day].every(exercise =>
+          Number((current.done || {})[exercise.id] || 0) >= minSets(weeklyTarget(selectedProgression(exercise, current).sets, week))
+        );
+      };
       const formatSets = n => {
         const mod10 = n % 10, mod100 = n % 100;
         return `${n} ${mod10 === 1 && mod100 !== 11 ? "подход" : ([2,3,4].includes(mod10) && ![12,13,14].includes(mod100) ? "подхода" : "подходов")}`;
@@ -652,8 +596,8 @@
 
       function renderCycleTabs() {
         $("#cycleTabs").innerHTML = phases.map((phase, index) => {
-          const pushDone = !!state.sessions[`${index}-push`]?.complete;
-          const pullDone = !!state.sessions[`${index}-pull`]?.complete;
+          const pushDone = sessionComplete(index, "push");
+          const pullDone = sessionComplete(index, "pull");
           return `<button type="button" class="cycle-tab${state.week === index ? " active" : ""}${pushDone && pullDone ? " done" : ""}" data-week="${index}" role="tab" aria-selected="${state.week === index}">
             <span class="week-no">${index + 1}</span><b>${phase.name}</b><span>${phase.short}</span>
           </button>`;
@@ -703,15 +647,6 @@
         $("#workoutBar").style.width = `${pct}%`;
       }
 
-      function renderReadiness() {
-        const currentReadiness = session().readiness || "keep";
-        $("#readiness").innerHTML = readinessOptions.map(item => `<button type="button" class="ready-btn${currentReadiness === item.id ? " active" : ""}" data-ready="${item.id}">
-          <i aria-hidden="true"></i><span><b>${item.title}</b><span>${item.text}</span></span>
-        </button>`).join("");
-        const selected = readinessOptions.find(item => item.id === currentReadiness) || readinessOptions[1];
-        $("#recommendation").textContent = selected.recommendation;
-      }
-
       function renderMatrix() {
         $("#matrixBody").innerHTML = ["push","pull"].flatMap(day => data[day].map((exercise, index) => `<tr>
           <td>${index === 0 ? day.toUpperCase() : ""}</td><td>${exercise.name}</td>${[0,1,2,3].map(week => {
@@ -729,8 +664,10 @@
 
       function cycleStats() {
         let sessionsDone = 0, totalSets = 0;
+        [0,1,2,3].forEach(week => ["push","pull"].forEach(day => {
+          if (sessionComplete(week, day)) sessionsDone++;
+        }));
         Object.values(state.sessions).forEach(item => {
-          if (item.complete) sessionsDone++;
           totalSets += Object.values(item.done || {}).reduce((sum, n) => sum + Number(n || 0), 0);
         });
         return { sessionsDone, totalSets, percent: Math.round(sessionsDone / 8 * 100) };
@@ -756,17 +693,12 @@
           btn.classList.toggle("active", active);
           btn.setAttribute("aria-selected", String(active));
         });
-        const current = session();
-        $("#notes").value = current.note || "";
-        $("#finishBtn").textContent = current.complete ? "Тренировка завершена ✓" : "Завершить тренировку";
-        $("#finishBtn").classList.toggle("is-done", current.complete);
         $("#workoutSubtitle").textContent = `${state.day.toUpperCase()} · ${phases[state.week].name} · отмечай выполненные подходы`;
       }
 
       function renderAll() {
         renderCycleTabs();
         renderWorkout();
-        renderReadiness();
         renderHeader();
         renderControls();
       }
@@ -810,27 +742,6 @@
         saveState();
         renderWorkout();
         toast("Прогрессия сохранена");
-      });
-
-      $("#readiness").addEventListener("click", event => {
-        const btn = event.target.closest("[data-ready]");
-        if (!btn) return;
-        session().readiness = btn.dataset.ready;
-        saveState();
-        renderReadiness();
-      });
-
-      $("#notes").addEventListener("input", event => {
-        session().note = event.target.value;
-        saveState();
-      });
-
-      $("#finishBtn").addEventListener("click", () => {
-        const current = session();
-        current.complete = !current.complete;
-        saveState();
-        renderAll();
-        toast(current.complete ? "Тренировка добавлена в цикл" : "Отметка о завершении снята");
       });
 
       $("#cycleStart").addEventListener("change", event => {
