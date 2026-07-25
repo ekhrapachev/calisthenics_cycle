@@ -642,6 +642,112 @@
     .section-label { margin: 18px 2px 8px; color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
     .version { margin-top: 24px; color: #a1a69c; text-align: center; font-size: 10px; }
 
+    .auth-screen {
+      padding: 72px 24px 30px;
+      text-align: left;
+    }
+    .auth-screen.active {
+      display: flex;
+      flex-direction: column;
+    }
+    .auth-brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      margin-bottom: auto;
+      font-size: 18px;
+      font-weight: 880;
+      letter-spacing: -.04em;
+    }
+    .auth-mark {
+      display: grid;
+      width: 38px;
+      height: 38px;
+      place-items: center;
+      color: var(--ink);
+      background: var(--lime);
+      border-radius: 13px;
+      font-size: 18px;
+      font-style: normal;
+      font-weight: 900;
+      transform: rotate(-4deg);
+    }
+    .auth-copy { margin: 56px 0 22px; }
+    .auth-copy h1 { margin-bottom: 9px; font-size: 34px; }
+    .auth-copy p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .auth-card { padding: 15px; }
+    .auth-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+      margin-bottom: 18px;
+      padding: 4px;
+      background: #eceee8;
+      border-radius: 13px;
+    }
+    .auth-tab {
+      min-height: 39px;
+      background: transparent;
+      border: 0;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 780;
+      cursor: pointer;
+    }
+    .auth-tab.active { background: #fff; box-shadow: 0 4px 13px rgba(32,38,25,.08); }
+    .auth-field { display: block; margin-bottom: 13px; }
+    .auth-field > span {
+      display: block;
+      margin: 0 0 6px 2px;
+      color: #5f655a;
+      font-size: 10px;
+      font-weight: 780;
+    }
+    .auth-field input {
+      width: 100%;
+      height: 52px;
+      padding: 0 13px;
+      color: var(--ink);
+      background: #f8f9f5;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      outline: none;
+      font: inherit;
+      font-size: 13px;
+    }
+    .auth-field input:focus { border-color: var(--lime-strong); box-shadow: 0 0 0 3px rgba(167,229,0,.12); }
+    .password-wrap { position: relative; }
+    .password-wrap input { padding-right: 58px; }
+    .password-toggle {
+      position: absolute;
+      top: 7px;
+      right: 7px;
+      height: 38px;
+      padding: 0 9px;
+      color: var(--muted);
+      background: transparent;
+      border: 0;
+      border-radius: 9px;
+      font-size: 10px;
+      font-weight: 750;
+      cursor: pointer;
+    }
+    .auth-card .primary { margin-top: 4px; }
+    .auth-note {
+      margin: 14px 8px 0;
+      color: #94998f;
+      text-align: center;
+      font-size: 9px;
+      line-height: 1.4;
+    }
+    .logout {
+      width: 100%;
+      margin-top: 18px;
+      color: #7a403a;
+      background: #fff3f1;
+      border-color: #f2dedb;
+    }
+
     .toast {
       position: absolute;
       z-index: 30;
@@ -791,19 +897,49 @@
   <main class="prototype">
     <nav class="prototype-menu" aria-label="Экраны прототипа">
       <p>Экраны прототипа</p>
-      <button class="screen-link active" data-screen-link="home"><i>01</i><span>Тренировки</span></button>
-      <button class="screen-link" data-screen-link="plan"><i>02</i><span>План</span></button>
-      <button class="screen-link" data-screen-link="exercise"><i>03</i><span>Упражнение</span></button>
-      <button class="screen-link" data-screen-link="rest"><i>04</i><span>Отдых</span></button>
-      <button class="screen-link" data-screen-link="history"><i>05</i><span>История</span></button>
-      <button class="screen-link" data-screen-link="summary"><i>06</i><span>Результат</span></button>
-      <button class="screen-link" data-screen-link="settings"><i>07</i><span>Настройки</span></button>
+      <button class="screen-link active" data-screen-link="auth"><i>01</i><span>Авторизация</span></button>
+      <button class="screen-link" data-screen-link="home"><i>02</i><span>Тренировки</span></button>
+      <button class="screen-link" data-screen-link="plan"><i>03</i><span>План</span></button>
+      <button class="screen-link" data-screen-link="exercise"><i>04</i><span>Упражнение</span></button>
+      <button class="screen-link" data-screen-link="rest"><i>05</i><span>Отдых</span></button>
+      <button class="screen-link" data-screen-link="history"><i>06</i><span>История</span></button>
+      <button class="screen-link" data-screen-link="summary"><i>07</i><span>Результат</span></button>
+      <button class="screen-link" data-screen-link="settings"><i>08</i><span>Настройки</span></button>
     </nav>
 
     <div class="phone">
       <div class="status"><span>9:41</span><span class="status-icons">▮▮▮ ))) <i class="battery"></i></span></div>
       <div class="app">
-        <section class="screen active" data-screen="home">
+        <section class="screen auth-screen active" data-screen="auth">
+          <div class="auth-brand"><i class="auth-mark">F</i><span>FORMA</span></div>
+          <div class="auth-copy">
+            <h1 id="authTitle">С возвращением</h1>
+            <p id="authSubtitle">Войдите, чтобы продолжить тренировочный цикл.</p>
+          </div>
+          <article class="card auth-card">
+            <div class="auth-tabs" role="tablist">
+              <button class="auth-tab active" type="button" data-auth-mode="login">Вход</button>
+              <button class="auth-tab" type="button" data-auth-mode="register">Регистрация</button>
+            </div>
+            <form id="authForm" novalidate>
+              <label class="auth-field">
+                <span>Почта</span>
+                <input id="authEmail" type="email" inputmode="email" autocomplete="email" placeholder="name@example.com">
+              </label>
+              <label class="auth-field">
+                <span>Пароль</span>
+                <div class="password-wrap">
+                  <input id="authPassword" type="password" autocomplete="current-password" placeholder="Не менее 6 символов">
+                  <button class="password-toggle" id="passwordToggle" type="button">Показать</button>
+                </div>
+              </label>
+              <button class="primary" id="authSubmit" type="submit">Войти</button>
+            </form>
+            <p class="auth-note" id="authNote">Для входа нужны только почта и пароль.</p>
+          </article>
+        </section>
+
+        <section class="screen" data-screen="home">
           <div class="top-row">
             <h1>Тренировки</h1>
             <button class="round-btn" data-go="settings" aria-label="Настройки">•••</button>
@@ -985,6 +1121,7 @@
             <button class="setting" style="width:100%;text-align:left;cursor:pointer" data-toast="Редактор плана — следующий этап"><span><b>Изменить программу</b><span>12 тренировок · 4 недели</span></span><span class="arrow">›</span></button>
             <button class="setting" style="width:100%;text-align:left;cursor:pointer" data-toast="Дни тренировок: Пн, Ср, Сб"><span><b>Расписание</b><span>Понедельник, среда, суббота</span></span><span class="arrow">›</span></button>
           </div>
+          <button class="secondary logout" data-logout>Выйти из аккаунта</button>
           <p class="version">FORMA · прототип 0.1</p>
         </section>
       </div>
@@ -1033,7 +1170,8 @@
         }
       };
       const state = {
-        screen: "home",
+        screen: "auth",
+        authMode: "login",
         workout: "pull",
         exercise: 0,
         set: 3,
@@ -1074,6 +1212,24 @@
         $("#toast").textContent = message;
         $("#toast").classList.add("show");
         toastTimer = setTimeout(() => $("#toast").classList.remove("show"), 2100);
+      }
+
+      function renderAuthMode() {
+        const registering = state.authMode === "register";
+        $$("[data-auth-mode]").forEach(button => {
+          const active = button.dataset.authMode === state.authMode;
+          button.classList.toggle("active", active);
+          button.setAttribute("aria-selected", String(active));
+        });
+        $("#authTitle").textContent = registering ? "Создайте аккаунт" : "С возвращением";
+        $("#authSubtitle").textContent = registering
+          ? "Начните тренировочный цикл и сохраняйте свой прогресс."
+          : "Войдите, чтобы продолжить тренировочный цикл.";
+        $("#authSubmit").textContent = registering ? "Создать аккаунт" : "Войти";
+        $("#authNote").textContent = registering
+          ? "Для регистрации нужны только почта и пароль."
+          : "Для входа нужны только почта и пароль.";
+        $("#authPassword").autocomplete = registering ? "new-password" : "current-password";
       }
 
       function renderExercise() {
@@ -1243,6 +1399,44 @@
         ].join("");
       }
 
+      $$("[data-auth-mode]").forEach(button => button.addEventListener("click", () => {
+        state.authMode = button.dataset.authMode;
+        renderAuthMode();
+      }));
+      $("#passwordToggle").addEventListener("click", () => {
+        const password = $("#authPassword");
+        const showing = password.type === "text";
+        password.type = showing ? "password" : "text";
+        $("#passwordToggle").textContent = showing ? "Показать" : "Скрыть";
+      });
+      $("#authForm").addEventListener("submit", event => {
+        event.preventDefault();
+        const email = $("#authEmail").value.trim();
+        const password = $("#authPassword").value;
+        if (!email || !email.includes("@")) {
+          toast("Введите корректную почту");
+          $("#authEmail").focus();
+          return;
+        }
+        if (password.length < 6) {
+          toast("Пароль должен содержать минимум 6 символов");
+          $("#authPassword").focus();
+          return;
+        }
+        const message = state.authMode === "register" ? "Аккаунт создан" : "Вход выполнен";
+        $("#authPassword").value = "";
+        showScreen("home");
+        toast(message);
+      });
+      $("[data-logout]").addEventListener("click", () => {
+        state.authMode = "login";
+        $("#authEmail").value = "";
+        $("#authPassword").value = "";
+        $("#authPassword").type = "password";
+        $("#passwordToggle").textContent = "Показать";
+        renderAuthMode();
+        showScreen("auth");
+      });
       $$("[data-go]").forEach(button => button.addEventListener("click", () => showScreen(button.dataset.go)));
       $$("[data-screen-link]").forEach(button => button.addEventListener("click", () => showScreen(button.dataset.screenLink)));
       $$("[data-toast]").forEach(button => button.addEventListener("click", () => toast(button.dataset.toast)));
@@ -1337,6 +1531,7 @@
         toast("Результат сохранён");
       });
 
+      renderAuthMode();
       renderWorkoutChoice();
       renderPlan();
       renderExercise();
