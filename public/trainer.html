@@ -526,6 +526,42 @@
     }
     .timer-value { display: block; font-size: 55px; font-weight: 850; letter-spacing: -.06em; }
     .timer-content small { color: var(--muted); font-size: 12px; }
+    .effort-card {
+      margin: -8px 0 14px;
+      padding: 12px;
+      text-align: left;
+    }
+    .effort-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 9px;
+    }
+    .effort-title b { font-size: 12px; }
+    .effort-title span { color: var(--muted); font-size: 9px; }
+    .effort-options {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+    .effort-option {
+      min-height: 53px;
+      padding: 8px 4px;
+      text-align: center;
+      background: #f2f4ee;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+    .effort-option b { display: block; margin-bottom: 2px; font-size: 11px; }
+    .effort-option small { color: var(--muted); font-size: 8px; line-height: 1.2; }
+    .effort-option.active {
+      background: var(--lime-soft);
+      border-color: var(--lime-strong);
+      box-shadow: inset 0 0 0 1px rgba(167,229,0,.18);
+    }
+    .effort-option.active small { color: #59682f; }
     .rest-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
     .secondary { padding: 12px; }
 
@@ -869,6 +905,14 @@
           <div class="timer" id="timerRing">
             <div class="timer-content"><strong class="timer-value" id="timerValue">02:14</strong><small id="restCaption">После подхода 3 из 5</small></div>
           </div>
+          <article class="card effort-card">
+            <div class="effort-title"><b>Как прошёл подход?</b><span>Необязательно</span></div>
+            <div class="effort-options" id="effortOptions">
+              <button class="effort-option" data-effort="easy"><b>Легко</b><small>4+ в запасе</small></button>
+              <button class="effort-option" data-effort="reserve"><b>С запасом</b><small>2–3 в запасе</small></button>
+              <button class="effort-option" data-effort="hard"><b>Тяжело</b><small>0–1 в запасе</small></button>
+            </div>
+          </article>
           <button class="primary" id="startEarly">Начать раньше</button>
           <div class="rest-actions">
             <button class="secondary" id="addTime">+30 сек</button>
@@ -996,6 +1040,7 @@
         reps: 2,
         seconds: 134,
         progressions: {},
+        effortRatings: {},
         editingExercise: null,
         pendingProgression: null
       };
@@ -1017,6 +1062,7 @@
         if (name === "rest") {
           state.seconds = 134;
           renderTimer();
+          renderEffortRating();
           startTimer();
         } else {
           stopTimer();
@@ -1093,6 +1139,19 @@
           $("#restNextLabel").textContent = "Тренировка завершена";
           $("#restNextDose").textContent = "Посмотреть результат";
         }
+      }
+
+      function effortKey() {
+        return `${state.workout}-${state.exercise}-${state.set}`;
+      }
+
+      function renderEffortRating() {
+        const selected = state.effortRatings[effortKey()];
+        $$("[data-effort]").forEach(button => {
+          const active = button.dataset.effort === selected;
+          button.classList.toggle("active", active);
+          button.setAttribute("aria-pressed", String(active));
+        });
       }
 
       function startTimer() {
@@ -1237,6 +1296,12 @@
         state.seconds += 30;
         renderTimer();
         toast("Добавлено 30 секунд");
+      });
+      $("#effortOptions").addEventListener("click", event => {
+        const option = event.target.closest("[data-effort]");
+        if (!option) return;
+        state.effortRatings[effortKey()] = option.dataset.effort;
+        renderEffortRating();
       });
       $("#repMinus").addEventListener("click", () => {
         state.reps = Math.max(1, state.reps - 1);
