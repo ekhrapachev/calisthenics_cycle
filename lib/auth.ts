@@ -3,7 +3,8 @@ import { ensureDatabase } from "@/db/ensure";
 
 const SESSION_COOKIE = "forma_session";
 const SESSION_SECONDS = 60 * 60 * 24 * 30;
-const HASH_ITERATIONS = 210_000;
+// Cloudflare Workers WebCrypto currently caps PBKDF2 at 100,000 iterations.
+const HASH_ITERATIONS = 100_000;
 
 export type AuthUser = {
   id: string;
