@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import "./globals.css";
 
-const title = "FORMA — прототип тренировок";
+const title = "FORMA — тренировки по калистенике";
 const description =
-  "Кликабельный мобильный прототип приложения для калистеники: план, подходы, отдых и прогресс.";
+  "PUSH и PULL тренировки по калистенике: прогрессии, подходы, отдых и история.";
 
 export async function generateMetadata(): Promise<Metadata> {
   const incomingHeaders = await headers();
