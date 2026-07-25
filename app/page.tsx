@@ -4,7 +4,7 @@ export default function Home() {
       <iframe
         className="trainer-frame"
         src="/trainer.html"
-        title="Калистеника — подбор тренировки"
+        title="FORMA — прототип тренировок"
       />
     </main>
   );

@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import "./globals.css";
 
-const title = "Калистеника — подбор тренировки";
+const title = "FORMA — прототип тренировок";
 const description =
-  "Интерактивный четырёхнедельный цикл калистеники: PUSH, PULL, прогрессии и учёт подходов.";
+  "Кликабельный мобильный прототип приложения для калистеники: план, подходы, отдых и прогресс.";
 
 export async function generateMetadata(): Promise<Metadata> {
   const incomingHeaders = await headers();
@@ -15,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const protocol =
     incomingHeaders.get("x-forwarded-proto") ??
     (host.startsWith("localhost") ? "http" : "https");
-  const imageUrl = new URL("/og.png", `${protocol}://${host}`).toString();
+  const imageUrl = new URL("/og-forma.png", `${protocol}://${host}`).toString();
 
   return {
     title,
