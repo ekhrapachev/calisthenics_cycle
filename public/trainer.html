@@ -290,7 +290,7 @@
     .next-card { padding: 14px; margin-bottom: 10px; }
     .tabs {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 5px;
       margin: 6px 0 10px;
       padding: 3px;
@@ -670,13 +670,12 @@
           <article class="card next-card">
             <p class="eyebrow">Следующая активность</p>
             <div class="tabs" role="tablist">
-              <button class="tab active" data-workout-tab>Силовая</button>
-              <button class="tab" data-workout-tab>Навыки</button>
-              <button class="tab" data-workout-tab>Мобилити</button>
+              <button class="tab" data-workout-tab="push">PUSH · жим</button>
+              <button class="tab active" data-workout-tab="pull">PULL · тяга</button>
             </div>
             <button class="workout-preview" data-go="plan">
-              <i class="exercise-icon">▣</i>
-              <div><b>Верх тела</b><span>≈ 55 мин · 5 упражнений</span></div>
+              <i class="exercise-icon" id="workoutPreviewIcon">⇈</i>
+              <div><b id="workoutPreviewTitle">PULL · верх тела</b><span id="workoutPreviewMeta">≈ 52 мин · 5 упражнений</span></div>
               <span class="arrow">›</span>
             </button>
           </article>
@@ -691,15 +690,9 @@
           </div>
           <div class="plan-hero">
             <i class="date-icon">▦</i>
-            <div><b>Сегодня · Верх тела</b><span>≈ 55 мин · средняя нагрузка</span></div>
+            <div><b id="planHeroTitle">Сегодня · PULL</b><span id="planHeroMeta">≈ 52 мин · средняя нагрузка</span></div>
           </div>
-          <div class="plan-list">
-            <button class="plan-item" data-exercise="0"><i class="exercise-icon">∿</i><span><b>Разминка</b><span>7 мин · суставная</span></span><span class="arrow">›</span></button>
-            <button class="plan-item" data-exercise="0"><i class="exercise-icon">↟</i><span><b>Выходы силой</b><span>5 подходов × 2</span></span><span class="arrow">›</span></button>
-            <button class="plan-item" data-exercise="1"><i class="exercise-icon">⇈</i><span><b>Высокие подтягивания</b><span>4 подхода × 4–5</span></span><span class="arrow">›</span></button>
-            <button class="plan-item" data-exercise="2"><i class="exercise-icon">⌁</i><span><b>Стойка на руках</b><span>3 подхода × 30 сек</span></span><span class="arrow">›</span></button>
-            <button class="plan-item" data-exercise="2"><i class="exercise-icon">⌁</i><span><b>Заминка</b><span>5 мин · восстановление</span></span><span class="arrow">›</span></button>
-          </div>
+          <div class="plan-list" id="planList"></div>
           <button class="primary" data-start-workout>Начать тренировку</button>
         </section>
 
@@ -821,12 +814,31 @@
 
   <script>
     (() => {
-      const exercises = [
-        { title: "Выходы силой", reps: 2, unit: "повтора", sets: 5, next: "высокие подтягивания", nextDose: "4 × 4–5" },
-        { title: "Высокие подтягивания", reps: 5, unit: "повторов", sets: 4, next: "стойка на руках", nextDose: "3 × 30 сек" },
-        { title: "Стойка на руках", reps: 30, unit: "секунд", sets: 3, next: "завершение тренировки", nextDose: "Сводка результата" }
-      ];
-      const state = { screen: "home", exercise: 0, set: 3, reps: 2, seconds: 134 };
+      const workouts = {
+        pull: {
+          label: "PULL",
+          title: "PULL · верх тела",
+          duration: 52,
+          icon: "⇈",
+          exercises: [
+            { title: "Выходы силой", reps: 2, unit: "повтора", sets: 5, icon: "↟", dose: "5 подходов × 2", next: "высокие подтягивания", nextDose: "4 × 4–5" },
+            { title: "Высокие подтягивания", reps: 5, unit: "повторов", sets: 4, icon: "⇈", dose: "4 подхода × 4–5", next: "фронт-левер", nextDose: "3 × 12 сек" },
+            { title: "Фронт-левер", reps: 12, unit: "секунд", sets: 3, icon: "⌜", dose: "3 подхода × 12 сек", next: "завершение тренировки", nextDose: "Сводка результата" }
+          ]
+        },
+        push: {
+          label: "PUSH",
+          title: "PUSH · верх тела",
+          duration: 55,
+          icon: "↥",
+          exercises: [
+            { title: "Отжимания в стойке", reps: 5, unit: "повторов", sets: 4, icon: "↥", dose: "4 подхода × 5", next: "брусья", nextDose: "4 × 8" },
+            { title: "Брусья", reps: 8, unit: "повторов", sets: 4, icon: "Π", dose: "4 подхода × 8", next: "планш", nextDose: "3 × 10 сек" },
+            { title: "Планш", reps: 10, unit: "секунд", sets: 3, icon: "⌁", dose: "3 подхода × 10 сек", next: "завершение тренировки", nextDose: "Сводка результата" }
+          ]
+        }
+      };
+      const state = { screen: "home", workout: "pull", exercise: 0, set: 3, reps: 2, seconds: 134 };
       let toastTimer;
       let timerInterval;
 
@@ -835,6 +847,7 @@
 
       function showScreen(name) {
         state.screen = name;
+        if (name === "plan") renderPlan();
         $$(".screen").forEach(screen => screen.classList.toggle("active", screen.dataset.screen === name));
         $$(".screen-link").forEach(link => link.classList.toggle("active", link.dataset.screenLink === name));
         const active = $(`[data-screen="${name}"]`);
@@ -857,6 +870,7 @@
       }
 
       function renderExercise() {
+        const exercises = workouts[state.workout].exercises;
         const item = exercises[state.exercise];
         state.reps = item.reps;
         $("#exerciseTitle").textContent = item.title;
@@ -876,6 +890,7 @@
       }
 
       function finishSet() {
+        const exercises = workouts[state.workout].exercises;
         const item = exercises[state.exercise];
         if (state.set >= item.sets && state.exercise >= exercises.length - 1) {
           showScreen("summary");
@@ -885,6 +900,7 @@
       }
 
       function continueWorkout() {
+        const exercises = workouts[state.workout].exercises;
         const item = exercises[state.exercise];
         if (state.set < item.sets) {
           state.set += 1;
@@ -899,6 +915,7 @@
       }
 
       function renderTimer() {
+        const exercises = workouts[state.workout].exercises;
         const minutes = Math.floor(state.seconds / 60);
         const seconds = state.seconds % 60;
         $("#timerValue").textContent = `${String(minutes).padStart(2,"0")}:${String(seconds).padStart(2,"0")}`;
@@ -935,22 +952,50 @@
         timerInterval = null;
       }
 
+      function renderWorkoutChoice() {
+        const workout = workouts[state.workout];
+        $$("[data-workout-tab]").forEach(tab => {
+          const active = tab.dataset.workoutTab === state.workout;
+          tab.classList.toggle("active", active);
+          tab.setAttribute("aria-selected", String(active));
+        });
+        $("#workoutPreviewIcon").textContent = workout.icon;
+        $("#workoutPreviewTitle").textContent = workout.title;
+        $("#workoutPreviewMeta").textContent = `≈ ${workout.duration} мин · 5 упражнений`;
+      }
+
+      function renderPlan() {
+        const workout = workouts[state.workout];
+        $("#planHeroTitle").textContent = `Сегодня · ${workout.label}`;
+        $("#planHeroMeta").textContent = `≈ ${workout.duration} мин · средняя нагрузка`;
+        $("#planList").innerHTML = [
+          `<button class="plan-item" data-exercise="0"><i class="exercise-icon">∿</i><span><b>Разминка</b><span>7 мин · суставная</span></span><span class="arrow">›</span></button>`,
+          ...workout.exercises.map((exercise, index) =>
+            `<button class="plan-item" data-exercise="${index}"><i class="exercise-icon">${exercise.icon}</i><span><b>${exercise.title}</b><span>${exercise.dose}</span></span><span class="arrow">›</span></button>`
+          ),
+          `<button class="plan-item" data-exercise="${workout.exercises.length - 1}"><i class="exercise-icon">⌁</i><span><b>Заминка</b><span>5 мин · восстановление</span></span><span class="arrow">›</span></button>`
+        ].join("");
+      }
+
       $$("[data-go]").forEach(button => button.addEventListener("click", () => showScreen(button.dataset.go)));
       $$("[data-screen-link]").forEach(button => button.addEventListener("click", () => showScreen(button.dataset.screenLink)));
       $$("[data-toast]").forEach(button => button.addEventListener("click", () => toast(button.dataset.toast)));
       $$("[data-workout-tab]").forEach(button => button.addEventListener("click", () => {
-        $$("[data-workout-tab]").forEach(tab => tab.classList.remove("active"));
-        button.classList.add("active");
-        toast(button.textContent === "Силовая" ? "Силовая тренировка выбрана" : `${button.textContent}: макет раздела`);
+        state.workout = button.dataset.workoutTab;
+        state.exercise = 0;
+        state.set = state.workout === "pull" ? 3 : 1;
+        renderWorkoutChoice();
       }));
-      $$("[data-exercise]").forEach(button => button.addEventListener("click", () => {
+      $("#planList").addEventListener("click", event => {
+        const button = event.target.closest("[data-exercise]");
+        if (!button) return;
         state.exercise = Number(button.dataset.exercise);
-        state.set = state.exercise === 0 ? 3 : 1;
+        state.set = state.exercise === 0 && state.workout === "pull" ? 3 : 1;
         showScreen("exercise");
-      }));
+      });
       $$("[data-start-workout]").forEach(button => button.addEventListener("click", () => {
         state.exercise = 0;
-        state.set = 3;
+        state.set = state.workout === "pull" ? 3 : 1;
         showScreen("exercise");
       }));
       $$(".toggle").forEach(button => button.addEventListener("click", () => button.classList.toggle("on")));
@@ -979,6 +1024,7 @@
         renderExercise();
       });
       $("#nextExerciseCard").addEventListener("click", () => {
+        const exercises = workouts[state.workout].exercises;
         if (state.exercise < exercises.length - 1) {
           state.exercise += 1;
           state.set = 1;
@@ -990,11 +1036,13 @@
       });
       $("[data-complete]").addEventListener("click", () => {
         state.exercise = 0;
-        state.set = 3;
+        state.set = state.workout === "pull" ? 3 : 1;
         showScreen("home");
         toast("Результат сохранён");
       });
 
+      renderWorkoutChoice();
+      renderPlan();
       renderExercise();
     })();
   </script>
