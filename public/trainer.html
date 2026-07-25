@@ -285,6 +285,8 @@
     .mini-icon { width: 30px; height: 30px; border-radius: 9px; font-size: 14px; }
     .progress-item span { font-size: 12px; }
     .progress-item b { color: var(--lime-strong); font-size: 12px; }
+    .progress-item > span:nth-child(2) { line-height: 1.25; }
+    .progress-item > span:last-child { text-align: right; white-space: nowrap; }
     .old { color: var(--muted); text-decoration: none; }
 
     .next-card { padding: 14px; margin-bottom: 10px; }
@@ -415,16 +417,21 @@
     .plan-item[data-progressible] { min-height: 82px; }
 
     .exercise-screen .top-row { margin-bottom: 6px; }
-    .exercise-meta { margin-bottom: 5px; color: var(--muted); font-size: 12px; }
-    .exercise-progression {
-      display: inline-flex;
-      margin: 0 0 10px;
-      padding: 5px 8px;
-      color: #506029;
-      background: var(--lime-soft);
-      border-radius: 8px;
+    .exercise-context {
+      margin: 14px 0 4px;
+      color: var(--muted);
       font-size: 10px;
-      font-weight: 760;
+      font-weight: 780;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .exercise-progression {
+      margin: 0 0 14px;
+      color: var(--ink);
+      font-size: 27px;
+      font-weight: 850;
+      line-height: 1.05;
+      letter-spacing: -.045em;
     }
     .bar { height: 8px; overflow: hidden; background: #e3e6df; border-radius: 99px; }
     .bar i { display: block; height: 100%; background: var(--lime); border-radius: inherit; transition: width .25s ease; }
@@ -790,9 +797,9 @@
 
           <article class="card progress-card">
             <p class="eyebrow">Прогресс с прошлой тренировки</p>
-            <div class="progress-item"><i class="mini-icon">↟</i><span>Выходы силой</span><span><span class="old">5 × 2 →</span> <b>5 × 3</b></span></div>
-            <div class="progress-item"><i class="mini-icon">⌁</i><span>Стойка на руках</span><span><span class="old">22 сек →</span> <b>30 сек</b></span></div>
-            <div class="progress-item"><i class="mini-icon">⌜</i><span>Планш</span><span><span class="old">8 сек →</span> <b>10 сек</b></span></div>
+            <div class="progress-item"><i class="mini-icon">↟</i><span>Выходы силой: с резиной</span><span><span class="old">5 × 2 →</span> <b>5 × 3</b></span></div>
+            <div class="progress-item"><i class="mini-icon">⌁</i><span>Стойка на руках: у стены</span><span><span class="old">22 сек →</span> <b>30 сек</b></span></div>
+            <div class="progress-item"><i class="mini-icon">⌜</i><span>Планш: tuck planche</span><span><span class="old">8 сек →</span> <b>10 сек</b></span></div>
           </article>
 
           <article class="card next-card">
@@ -830,8 +837,8 @@
             <h2 id="exerciseTitle">Выходы силой</h2>
             <button class="round-btn" data-toast="Подсказка: держите корпус ближе к перекладине" aria-label="Подсказка">?</button>
           </div>
-          <p class="exercise-meta" id="exerciseMeta">Упражнение 1 из 3</p>
-          <p class="exercise-progression" id="exerciseProgression">Прогрессия: чистый выход</p>
+          <p class="exercise-context">Выбранная прогрессия</p>
+          <h1 class="exercise-progression" id="exerciseProgression">Чистый выход</h1>
           <div class="bar"><i id="exerciseProgress" style="width: 34%"></i></div>
 
           <article class="card set-card">
@@ -1028,8 +1035,7 @@
         const item = exercises[state.exercise];
         state.reps = item.reps;
         $("#exerciseTitle").textContent = item.title;
-        $("#exerciseMeta").textContent = `Упражнение ${state.exercise + 1} из ${exercises.length}`;
-        $("#exerciseProgression").textContent = `Прогрессия: ${selectedProgressionName(state.exercise)}`;
+        $("#exerciseProgression").textContent = selectedProgressionName(state.exercise);
         $("#exerciseProgress").style.width = `${((state.exercise + 1) / exercises.length) * 100}%`;
         $("#setLabel").textContent = `Подход ${state.set} из ${item.sets}`;
         $("#repValue").textContent = state.reps;
