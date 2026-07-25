@@ -228,6 +228,13 @@
       border: 1px solid #e2e4e8;
       border-radius: 10px;
     }
+    .dose-recommendation {
+      margin: 9px 0 0;
+      color: #3e4a60;
+      font-size: .8rem;
+      font-weight: 700;
+      line-height: 1.35;
+    }
     .set-control { align-self: center; text-align: center; }
     .set-target { color: var(--muted); font-size: .72rem; font-weight: 760; text-transform: uppercase; }
     .set-value { display: flex; align-items: center; justify-content: center; gap: 9px; margin-top: 7px; }
@@ -510,20 +517,65 @@
 
       const data = {
         push: [
-          { id: "handstand", name: "Стойка на руках", sets: ["3–4","4–5","4–6","2–3"], progressions: ["У стены животом","Отрывы стоп","Свободные попытки","Стабильная свободная стойка"] },
-          { id: "planche", name: "Планш-прогрессия", sets: ["3–4","4–5","5–6","2–3"], progressions: ["Planche lean","Tuck planche","Advanced tuck","Straddle planche","Full planche"] },
-          { id: "hspu", name: "Отжимания в стойке / прогрессия", sets: ["3–4","4–5","4–5","2–3"], progressions: ["Pike","Ноги выше","Негатив у стены","Частичная амплитуда","Полная у стены","Свободные HSPU"] },
-          { id: "dips", name: "Брусья с весом", sets: ["3–4","4–5","4–5","2–3"], progressions: ["Свой вес","Пауза / медленный темп","+2,5 кг","+5 кг","+7,5 кг","+10 кг"] },
-          { id: "pppu", name: "Псевдопланш-отжимания", sets: ["3","3–4","3–4","2"], progressions: ["Умеренный наклон","Глубокий наклон","Ноги выше","С паузой","С утяжелением"] },
-          { id: "pushups", name: "Обычные или узкие отжимания", sets: ["2–3","3","3","2"], progressions: ["Обычные","Узкие","Ноги выше","С паузой","С утяжелением"] }
+          { id: "handstand", name: "Стойка на руках", progressions: [
+            { name: "У стены животом", sets: "3", dose: "30–45 секунд" }, { name: "Отрывы стоп", sets: "3–4", dose: "4–6 контролируемых отрывов" },
+            { name: "Свободные попытки", sets: "5–8", dose: "5–20 секунд" }, { name: "Стабильная свободная стойка", sets: "3–4", dose: "20–40 секунд" }
+          ] },
+          { id: "planche", name: "Планш-прогрессия", progressions: [
+            { name: "Planche lean", sets: "3–4", dose: "15–25 секунд" }, { name: "Tuck planche", sets: "3–4", dose: "10–15 секунд" },
+            { name: "Advanced tuck", sets: "3–4", dose: "8–12 секунд" }, { name: "Straddle planche", sets: "4", dose: "5–8 секунд" },
+            { name: "Full planche", sets: "4", dose: "3–6 секунд" }
+          ] },
+          { id: "hspu", name: "Отжимания в стойке / прогрессия", progressions: [
+            { name: "Pike", sets: "3–4", dose: "8–12 повторений" }, { name: "Ноги выше", sets: "3–4", dose: "6–10 повторений" },
+            { name: "Негатив у стены", sets: "3–4", dose: "3–5 повторений, опускание 4–6 секунд" }, { name: "Частичная амплитуда", sets: "3–4", dose: "4–8 повторений" },
+            { name: "Полная у стены", sets: "3–4", dose: "3–6 повторений" }, { name: "Свободные HSPU", sets: "4", dose: "1–4 повторения" }
+          ] },
+          { id: "dips", name: "Брусья с весом", progressions: [
+            { name: "Свой вес", sets: "3", dose: "10–15 повторений" }, { name: "Пауза / медленный темп", sets: "3", dose: "6–10 повторений" },
+            { name: "+2,5 кг", sets: "3–4", dose: "6–10 повторений" }, { name: "+5 кг", sets: "3–4", dose: "5–8 повторений" },
+            { name: "+7,5 кг", sets: "3–4", dose: "4–6 повторений" }, { name: "+10 кг", sets: "3–4", dose: "3–5 повторений" }
+          ] },
+          { id: "pppu", name: "Псевдопланш-отжимания", progressions: [
+            { name: "Умеренный наклон", sets: "3", dose: "8–12 повторений" }, { name: "Глубокий наклон", sets: "3–4", dose: "6–10 повторений" },
+            { name: "Ноги выше", sets: "3–4", dose: "5–8 повторений" }, { name: "С паузой", sets: "3–4", dose: "5–8 повторений" },
+            { name: "С утяжелением", sets: "3–4", dose: "4–6 повторений" }
+          ] },
+          { id: "pushups", name: "Обычные или узкие отжимания", progressions: [
+            { name: "Обычные", sets: "2–3", dose: "12–20 повторений" }, { name: "Узкие", sets: "3", dose: "8–15 повторений" },
+            { name: "Ноги выше", sets: "3", dose: "8–12 повторений" }, { name: "С паузой", sets: "3", dose: "8–12 повторений" },
+            { name: "С утяжелением", sets: "3–4", dose: "6–10 повторений" }
+          ] }
         ],
         pull: [
-          { id: "frontlever", name: "Фронт-левер", sets: ["3–4","4–5","5–6","2–3"], progressions: ["Tuck","Advanced tuck","Одна нога","Straddle","Full front lever"] },
-          { id: "muscleup", name: "Выход силой", sets: ["3–4","4–5","4–5","2–3"], progressions: ["Высокая тяга","К груди","С резиной","Негатив","Чистый выход","Несколько подряд"] },
-          { id: "pullups", name: "Подтягивания с весом", sets: ["3–4","4–5","4–5","2–3"], progressions: ["Свой вес","Пауза / медленный темп","+2,5 кг","+5 кг","+7,5 кг","+10 кг"] },
-          { id: "highpull", name: "Высокие подтягивания", sets: ["3","3–4","3–4","2"], progressions: ["К ключицам","К груди","К нижней груди","К поясу"] },
-          { id: "australian", name: "Австралийские подтягивания", sets: ["3","3–4","3–4","2"], progressions: ["Высокая опора","Горизонтально","Ноги на опоре","С паузой","С утяжелением"] },
-          { id: "legraises", name: "Подъёмы ног / коленей в висе", sets: ["3","3–4","3–4","2"], progressions: ["Колени к груди","Колени с паузой","Прямые ноги до 90°","Носки к перекладине"] }
+          { id: "frontlever", name: "Фронт-левер", progressions: [
+            { name: "Tuck", sets: "3–4", dose: "12–20 секунд" }, { name: "Advanced tuck", sets: "3–4", dose: "10–15 секунд" },
+            { name: "Одна нога", sets: "3–4", dose: "8–12 секунд" }, { name: "Straddle", sets: "4", dose: "6–10 секунд" },
+            { name: "Full front lever", sets: "4", dose: "4–8 секунд" }
+          ] },
+          { id: "muscleup", name: "Выход силой", progressions: [
+            { name: "Высокая тяга", sets: "3–4", dose: "4–8 повторений" }, { name: "К груди", sets: "3–4", dose: "3–6 повторений" },
+            { name: "С резиной", sets: "3–4", dose: "3–5 повторений" }, { name: "Негатив", sets: "3–4", dose: "2–4 повторения, опускание 4–6 секунд" },
+            { name: "Чистый выход", sets: "3–4", dose: "1–4 повторения" }, { name: "Несколько подряд", sets: "3–4", dose: "3–6 повторений" }
+          ] },
+          { id: "pullups", name: "Подтягивания с весом", progressions: [
+            { name: "Свой вес", sets: "3", dose: "8–12 повторений" }, { name: "Пауза / медленный темп", sets: "3", dose: "5–8 повторений" },
+            { name: "+2,5 кг", sets: "3–4", dose: "5–8 повторений" }, { name: "+5 кг", sets: "3–4", dose: "4–7 повторений" },
+            { name: "+7,5 кг", sets: "3–4", dose: "3–6 повторений" }, { name: "+10 кг", sets: "3–4", dose: "2–5 повторений" }
+          ] },
+          { id: "highpull", name: "Высокие подтягивания", progressions: [
+            { name: "К ключицам", sets: "3", dose: "6–10 повторений" }, { name: "К груди", sets: "3–4", dose: "4–7 повторений" },
+            { name: "К нижней груди", sets: "3–4", dose: "3–5 повторений" }, { name: "К поясу", sets: "4", dose: "1–4 повторения" }
+          ] },
+          { id: "australian", name: "Австралийские подтягивания", progressions: [
+            { name: "Высокая опора", sets: "3", dose: "12–20 повторений" }, { name: "Горизонтально", sets: "3", dose: "10–15 повторений" },
+            { name: "Ноги на опоре", sets: "3", dose: "8–12 повторений" }, { name: "С паузой", sets: "3", dose: "8–12 повторений" },
+            { name: "С утяжелением", sets: "3–4", dose: "6–10 повторений" }
+          ] },
+          { id: "legraises", name: "Подъёмы ног / коленей в висе", progressions: [
+            { name: "Колени к груди", sets: "3", dose: "10–15 повторений" }, { name: "Колени с паузой", sets: "3", dose: "8–12 повторений" },
+            { name: "Прямые ноги до 90°", sets: "3", dose: "6–10 повторений" }, { name: "Носки к перекладине", sets: "3–4", dose: "4–8 повторений" }
+          ] }
         ]
       };
 
@@ -569,6 +621,19 @@
       };
       const maxSets = value => Number(String(value).split("–").pop());
       const minSets = value => Number(String(value).split("–")[0]);
+      const formatRange = (min, max) => min === max ? String(min) : `${min}–${max}`;
+      const formatSetTarget = value => {
+        const max = maxSets(value);
+        return `${value} ${max === 1 ? "подход" : (max < 5 ? "подхода" : "подходов")}`;
+      };
+      const weeklyTarget = (base, week = state.week) => {
+        const min = minSets(base), max = maxSets(base);
+        if (week === 2) return formatRange(Math.max(2, min - 1), Math.max(2, max - 1));
+        if (week === 3) return formatRange(Math.max(1, Math.ceil(min / 2)), Math.max(1, Math.ceil(max / 2)));
+        return base;
+      };
+      const selectedProgression = (exercise, current = session()) =>
+        exercise.progressions.find(item => item.name === current.progression[exercise.id]) || exercise.progressions[0];
       const formatSets = n => {
         const mod10 = n % 10, mod100 = n % 100;
         return `${n} ${mod10 === 1 && mod100 !== 11 ? "подход" : ([2,3,4].includes(mod10) && ![12,13,14].includes(mod100) ? "подхода" : "подходов")}`;
@@ -599,15 +664,16 @@
         const current = session();
         const exercises = data[state.day];
         $("#workoutList").innerHTML = exercises.map((exercise, index) => {
-          const target = exercise.sets[state.week];
+          const progression = selectedProgression(exercise, current);
+          const target = weeklyTarget(progression.sets);
           const done = Math.min(Number(current.done[exercise.id] || 0), maxSets(target));
-          const selected = current.progression[exercise.id] || exercise.progressions[0];
-          const options = exercise.progressions.map(item => `<option${item === selected ? " selected" : ""}>${item}</option>`).join("");
+          const options = exercise.progressions.map(item => `<option${item.name === progression.name ? " selected" : ""}>${item.name}</option>`).join("");
           return `<article class="exercise${done >= minSets(target) ? " complete" : ""}" data-id="${exercise.id}">
             <div>
               <div class="exercise-head"><span class="exercise-num">${String(index + 1).padStart(2,"0")}</span><h3>${exercise.name}</h3></div>
               <label class="progression-label" for="progression-${exercise.id}">Рабочая прогрессия</label>
               <select class="progression-select" id="progression-${exercise.id}" data-progression="${exercise.id}">${options}</select>
+              <p class="dose-recommendation">Рекомендация: ${formatSetTarget(target)} × ${progression.dose}</p>
             </div>
             <div class="set-control">
               <span class="set-target">Выполнено</span>
@@ -626,8 +692,9 @@
       function renderWorkoutSummary() {
         const current = session();
         const exercises = data[state.day];
-        const planMin = exercises.reduce((sum, item) => sum + minSets(item.sets[state.week]), 0);
-        const planMax = exercises.reduce((sum, item) => sum + maxSets(item.sets[state.week]), 0);
+        const targets = exercises.map(item => weeklyTarget(selectedProgression(item, current).sets));
+        const planMin = targets.reduce((sum, value) => sum + minSets(value), 0);
+        const planMax = targets.reduce((sum, value) => sum + maxSets(value), 0);
         const done = exercises.reduce((sum, item) => sum + Number(current.done[item.id] || 0), 0);
         const pct = planMin ? Math.min(100, Math.round(done / planMin * 100)) : 0;
         $("#plannedSets").textContent = planMin === planMax ? formatSets(planMin) : `${planMin}–${planMax} подходов`;
@@ -647,7 +714,10 @@
 
       function renderMatrix() {
         $("#matrixBody").innerHTML = ["push","pull"].flatMap(day => data[day].map((exercise, index) => `<tr>
-          <td>${index === 0 ? day.toUpperCase() : ""}</td><td>${exercise.name}</td>${exercise.sets.map(value => `<td><b>${value}</b></td>`).join("")}
+          <td>${index === 0 ? day.toUpperCase() : ""}</td><td>${exercise.name}</td>${[0,1,2,3].map(week => {
+            const values = exercise.progressions.map(item => weeklyTarget(item.sets, week));
+            return `<td><b>${Math.min(...values.map(minSets))}–${Math.max(...values.map(maxSets))}</b></td>`;
+          }).join("")}
         </tr>`)).join("");
       }
 
@@ -728,7 +798,7 @@
         const exercise = data[state.day].find(item => item.id === btn.dataset.id);
         const current = session();
         const next = Number(current.done[exercise.id] || 0) + Number(btn.dataset.step);
-        current.done[exercise.id] = Math.max(0, Math.min(maxSets(exercise.sets[state.week]), next));
+        current.done[exercise.id] = Math.max(0, Math.min(maxSets(weeklyTarget(selectedProgression(exercise, current).sets)), next));
         saveState();
         renderWorkout();
         renderHeader();
@@ -738,6 +808,7 @@
         if (!event.target.matches("[data-progression]")) return;
         session().progression[event.target.dataset.progression] = event.target.value;
         saveState();
+        renderWorkout();
         toast("Прогрессия сохранена");
       });
 
