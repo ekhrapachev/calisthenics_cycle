@@ -87,14 +87,14 @@ button { color: inherit; }
   text-transform: uppercase;
 }
 
-.auth-copy h1, .page-title h1, .hero-panel h1 {
+.auth-copy h1, .page-title h1 {
   margin: 0;
   font-size: clamp(38px, 5vw, 64px);
   line-height: .98;
   letter-spacing: -.055em;
 }
 
-.auth-copy p, .page-title p, .hero-panel p {
+.auth-copy p, .page-title p {
   margin: 18px 0 0;
   color: var(--muted);
   font-size: 16px;
@@ -258,7 +258,6 @@ button { color: inherit; }
   align-items: center;
   justify-content: space-between;
 }
-.topbar-note { max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 13px; font-weight: 700; }
 .topbar-title {
   position: absolute;
   left: 72px;
@@ -403,8 +402,7 @@ button { color: inherit; }
 }
 
 .cycle-card,
-.progress-card,
-.activity-card {
+.progress-card {
   border: 1px solid rgba(218, 222, 213, .92);
   background: rgba(255, 255, 255, .93);
   box-shadow: 0 13px 32px rgba(64, 69, 58, .035);
@@ -414,12 +412,10 @@ button { color: inherit; }
   padding: 10px 16px 9px;
   border-radius: 21px;
 }
-.cycle-card > span,
-.activity-label {
+.cycle-card > span {
   color: var(--muted);
   font-size: 13px;
 }
-.activity-label { display: block; }
 .cycle-card h2 {
   margin: 3px 0 10px;
   font-size: 20px;
@@ -501,19 +497,6 @@ button { color: inherit; }
   color: var(--lime-deep);
   font-weight: 750;
 }
-
-.activity-card {
-  padding: 13px 15px 15px;
-  border-radius: 21px;
-}
-.activity-card .home-switcher {
-  margin: 5px 0 10px;
-  padding: 3px;
-  border-radius: 13px;
-}
-.activity-card .home-switcher button { min-height: 29px; font-size: 12px; }
-.activity-card .preview-list { margin-bottom: 14px; }
-.activity-card .primary-button { min-height: 50px; }
 
 .home-routines {
   display: grid;
@@ -831,19 +814,6 @@ button { color: inherit; }
 .add-exercise-button { border-color: #91dc00; background: #fff; }
 .cancel-edit-button { justify-self: center; color: var(--muted); }
 
-.hero-panel {
-  padding: 25px;
-  border-radius: 25px;
-  overflow: hidden;
-  background: linear-gradient(135deg, #1e211e, #343a32);
-  color: #fff;
-}
-.hero-panel .eyebrow, .hero-panel p { color: #bfc5bb; }
-.hero-panel h1 { font-size: 52px; }
-.hero-panel p { max-width: 340px; margin-top: 14px; font-size: 14px; }
-.hero-progress { height: 6px; margin-top: 24px; overflow: hidden; border-radius: 6px; background: #4c5249; }
-.hero-progress span { display: block; height: 100%; border-radius: inherit; background: var(--lime); }
-
 .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .stat-grid article {
   padding: 18px;
@@ -856,25 +826,13 @@ button { color: inherit; }
 .stat-grid strong { font-size: 29px; letter-spacing: -.05em; }
 .stat-grid span { color: var(--muted); font-size: 12px; }
 
-.section-card, .set-card, .next-card, .effort-card, .profile-card, .empty-state {
+.set-card, .next-card, .effort-card, .profile-card, .empty-state {
   padding: 20px;
   border: 1px solid var(--line);
   border-radius: 22px;
   background: var(--card);
 }
-.section-heading { display: flex; align-items: start; justify-content: space-between; gap: 10px; }
-.section-heading h2 { margin: 0; font-size: 30px; letter-spacing: -.04em; }
-.duration-pill { padding: 8px 10px; border-radius: 20px; background: var(--soft); color: var(--muted); font-size: 12px; font-weight: 750; }
-
-.switcher {
-  margin: 18px 0 14px;
-  padding: 4px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  border-radius: 14px;
-  background: var(--soft);
-}
-.switcher button, .effort-grid button {
+.effort-grid button {
   min-height: 42px;
   border: 0;
   border-radius: 11px;
@@ -882,22 +840,7 @@ button { color: inherit; }
   font-weight: 850;
   cursor: pointer;
 }
-.switcher button.active, .effort-grid button.active { background: var(--lime); }
-
-.preview-list { display: grid; margin-bottom: 16px; }
-.preview-list > div, .timeline-item {
-  min-height: 64px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  border: 0;
-  border-bottom: 1px solid #ecefe8;
-  background: transparent;
-  text-align: left;
-}
-.preview-list p, .timeline-item p { flex: 1; min-width: 0; margin: 0; display: grid; gap: 4px; }
-.preview-list strong, .timeline-item strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
-.preview-list small, .timeline-item small { color: var(--muted); font-size: 12px; }
+.effort-grid button.active { background: var(--lime); }
 
 .exercise-icon {
   width: 39px;
@@ -918,10 +861,6 @@ button { color: inherit; }
 .page-title p { margin-top: 10px; font-size: 14px; }
 .page-title.centered { text-align: center; }
 
-.timeline { padding: 5px 18px; border: 1px solid var(--line); border-radius: 22px; background: #fff; }
-.timeline-item { width: 100%; padding: 9px 0; cursor: pointer; }
-.timeline-item.muted { color: var(--muted); cursor: default; }
-.change-link { color: #72ae00; font-size: 11px; font-weight: 850; white-space: nowrap; }
 .inline-notice { margin: 0; padding: 11px 14px; border-radius: 12px; background: #efffd2; color: #4c7100; font-size: 12px; }
 .set-card { text-align: center; }
 .set-card > p { margin: 0; color: var(--muted); font-weight: 750; }
@@ -1042,27 +981,6 @@ button { color: inherit; }
   font-size: 12px;
   cursor: pointer;
 }
-
-.bottom-nav {
-  min-height: 72px;
-  padding: 8px 24px 12px;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  border-top: 1px solid var(--line);
-  background: rgba(250,251,247,.92);
-  backdrop-filter: blur(16px);
-}
-.bottom-nav button {
-  border: 0;
-  background: transparent;
-  color: #858a81;
-  font-size: 10px;
-  font-weight: 750;
-  cursor: pointer;
-}
-.bottom-nav span { width: 30px; height: 30px; margin: 0 auto 2px; display: grid; place-items: center; border-radius: 9px; font-size: 18px; }
-.bottom-nav button.active { color: var(--ink); }
-.bottom-nav button.active span { background: var(--lime); }
 
 .modal-backdrop {
   position: fixed;
@@ -1253,8 +1171,6 @@ button { color: inherit; }
 
 @media (max-height: 700px) {
   .topbar { min-height: 64px; padding-top: 12px; }
-  .hero-panel { padding: 20px; }
-  .hero-panel h1 { font-size: 43px; }
   .timer-ring { width: 235px; }
   .timer-ring strong { font-size: 47px; }
 }

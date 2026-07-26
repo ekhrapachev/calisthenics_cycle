@@ -16,6 +16,7 @@ Requires Node.js 22.13 or newer.
 
 ```bash
 npm install
+npm run db:migrate:local
 npm run dev
 ```
 
@@ -30,6 +31,7 @@ npm run build
 ## Cloudflare
 
 The Worker is named `forma`; its D1 binding is `DB`, backed by `forma-db`.
+Database structure is managed only through the checked-in Drizzle migrations.
 
 Apply database migrations:
 

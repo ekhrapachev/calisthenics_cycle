@@ -1,5 +1,4 @@
 import { env } from "cloudflare:workers";
-import { ensureDatabase } from "@/db/ensure";
 import { requireUser } from "@/lib/auth";
 import { json } from "@/lib/http";
 
@@ -7,7 +6,6 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   const user = await requireUser(request);
   if (!user) return json({ error: "Требуется вход" }, 401);
   const { id } = await context.params;
-  await ensureDatabase();
   const workout = await env.DB.prepare(
     "SELECT started_at AS startedAt FROM workout_sessions WHERE id = ?1 AND user_id = ?2 AND status = 'active'",
   ).bind(id, user.id).first<{ startedAt: number }>();

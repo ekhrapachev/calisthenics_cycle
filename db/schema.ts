@@ -29,12 +29,12 @@ export const progressionSelections = sqliteTable(
   "progression_selections",
   {
     userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-    workoutType: text("workout_type").notNull(),
+    scope: text("workout_type").notNull(),
     exerciseKey: text("exercise_key").notNull(),
     progression: text("progression").notNull(),
     updatedAt: integer("updated_at").notNull(),
   },
-  (table) => [primaryKey({ columns: [table.userId, table.workoutType, table.exerciseKey] })],
+  (table) => [primaryKey({ columns: [table.userId, table.scope, table.exerciseKey] })],
 );
 
 export const workoutRoutineProfiles = sqliteTable("workout_routine_profiles", {

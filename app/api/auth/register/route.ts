@@ -1,6 +1,5 @@
 import { env } from "cloudflare:workers";
 import { createSession, hashPassword, isEmail, normalizeEmail } from "@/lib/auth";
-import { ensureDatabase } from "@/db/ensure";
 import { json, readJson } from "@/lib/http";
 
 type RegisterBody = {
@@ -25,7 +24,6 @@ export async function POST(request: Request) {
   if (!["male", "female", "unspecified"].includes(gender)) return json({ error: "Выберите пол" }, 400);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) return json({ error: "Укажите дату рождения" }, 400);
 
-  await ensureDatabase();
   const exists = await env.DB.prepare("SELECT id FROM users WHERE email = ?1").bind(email).first();
   if (exists) return json({ error: "Аккаунт с такой почтой уже существует" }, 409);
 

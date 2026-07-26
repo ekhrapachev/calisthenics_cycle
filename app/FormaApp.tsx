@@ -126,9 +126,8 @@ export default function FormaApp() {
 
   const selectedRoutine = routines.find((routine) => routine.id === selectedRoutineId) ?? null;
   const currentExercise = activeExercises[exerciseIndex];
-  const progressionFor = (exercise: Exercise) => exercise.defaultProgression;
   const routineProgressionFor = (exercise: Exercise, routineId = selectedRoutineId) =>
-    routineId ? progressions[`routine:${routineId}:${exercise.key}`] || exercise.defaultProgression : exercise.defaultProgression;
+    routineId ? progressions[`${routineId}:${exercise.key}`] || exercise.defaultProgression : exercise.defaultProgression;
   const draftExercises = draft
     ? draft.exerciseKeys.map((key) => EXERCISES_BY_KEY[key]).filter((exercise): exercise is Exercise => Boolean(exercise))
     : [];
@@ -149,13 +148,12 @@ export default function FormaApp() {
     if (!user) return;
     Promise.all([
       api<{ routines: Routine[] }>("/api/routines"),
-      api<{ progressions: { workoutType: string; exerciseKey: string; progression: string }[] }>("/api/progressions"),
+      api<{ progressions: { routineId: string; exerciseKey: string; progression: string }[] }>("/api/progressions"),
       api<{
         active: {
           id: string;
           routineName: string;
           exercises: Exercise[];
-          workoutType: string;
         } | null;
         history: HistoryItem[];
       }>("/api/workouts"),
@@ -164,7 +162,7 @@ export default function FormaApp() {
         setRoutines(routineData.routines);
         const nextProgressions: Record<string, string> = {};
         progressionData.progressions.forEach((item) => {
-          nextProgressions[`${item.workoutType}:${item.exerciseKey}`] = item.progression;
+          nextProgressions[`${item.routineId}:${item.exerciseKey}`] = item.progression;
         });
         setProgressions(nextProgressions);
         setHistory(workoutData.history);
@@ -235,15 +233,15 @@ export default function FormaApp() {
 
   const chooseProgression = async (exercise: Exercise, progression: string) => {
     if (!selectedRoutine) return;
-    const workoutType = `routine:${selectedRoutine.id}`;
-    const key = `${workoutType}:${exercise.key}`;
+    const routineId = selectedRoutine.id;
+    const key = `${routineId}:${exercise.key}`;
     const previous = progressions[key];
     setProgressions((items) => ({ ...items, [key]: progression }));
     setPicker(null);
     try {
       await api("/api/progressions", {
         method: "PUT",
-        body: JSON.stringify({ workoutType, exerciseKey: exercise.key, progression }),
+        body: JSON.stringify({ routineId, exerciseKey: exercise.key, progression }),
       });
     } catch (reason) {
       setProgressions((items) => ({ ...items, [key]: previous || exercise.defaultProgression }));
@@ -394,7 +392,7 @@ export default function FormaApp() {
         method: "POST",
         body: JSON.stringify({
           exerciseKey: currentExercise.key,
-          progression: progressionFor(currentExercise),
+          progression: currentExercise.defaultProgression,
           setNumber,
           targetValue: currentExercise.target,
           actualValue,
@@ -420,7 +418,7 @@ export default function FormaApp() {
         method: "POST",
         body: JSON.stringify({
           exerciseKey: lastSet.exercise.key,
-          progression: progressionFor(lastSet.exercise),
+          progression: lastSet.exercise.defaultProgression,
           setNumber: lastSet.setNumber,
           targetValue: lastSet.exercise.target,
           actualValue: lastSet.actualValue,
@@ -879,7 +877,7 @@ export default function FormaApp() {
             <div className="screen-stack exercise-screen">
               <div className="page-title centered">
                 <span className="eyebrow">Прогрессия</span>
-                <h1>{currentExercise.name}:<br /><em>{progressionFor(currentExercise)}</em></h1>
+                <h1>{currentExercise.name}:<br /><em>{currentExercise.defaultProgression}</em></h1>
               </div>
               <section className="set-card">
                 <p>Подход {setNumber} из {currentExercise.sets}</p>

@@ -1,5 +1,4 @@
 import { env } from "cloudflare:workers";
-import { ensureDatabase } from "@/db/ensure";
 
 const SESSION_COOKIE = "forma_session";
 const SESSION_SECONDS = 60 * 60 * 24 * 30;
@@ -95,7 +94,6 @@ function getCookie(request: Request, name: string) {
 }
 
 export async function createSession(userId: string, request: Request) {
-  await ensureDatabase();
   const token = randomToken();
   const id = await sha256(token);
   const now = Date.now();
@@ -108,7 +106,6 @@ export async function createSession(userId: string, request: Request) {
 }
 
 export async function deleteSession(request: Request) {
-  await ensureDatabase();
   const token = getCookie(request, SESSION_COOKIE);
   if (token) await env.DB.prepare("DELETE FROM sessions WHERE id = ?1").bind(await sha256(token)).run();
   const secure = new URL(request.url).protocol === "https:" ? "; Secure" : "";
@@ -116,7 +113,6 @@ export async function deleteSession(request: Request) {
 }
 
 export async function getUser(request: Request): Promise<AuthUser | null> {
-  await ensureDatabase();
   const token = getCookie(request, SESSION_COOKIE);
   if (!token) return null;
   const now = Date.now();

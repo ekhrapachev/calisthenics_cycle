@@ -1,15 +1,8 @@
 import { env } from "cloudflare:workers";
-import { ensureDatabase } from "@/db/ensure";
 import { requireUser } from "@/lib/auth";
-import { EXERCISES_BY_KEY, DEFAULT_ROUTINES } from "@/lib/workout-catalog";
+import { parseRoutine, type RoutineInput } from "@/lib/routines";
+import { DEFAULT_ROUTINES } from "@/lib/workout-catalog";
 import { json, readJson } from "@/lib/http";
-
-type RoutineBody = {
-  name?: string;
-  durationMinutes?: number;
-  difficulty?: string;
-  exerciseKeys?: string[];
-};
 
 type RoutineRow = {
   id: string;
@@ -23,28 +16,6 @@ type RoutineRow = {
 type ExerciseRow = {
   routineId: string;
   exerciseKey: string;
-};
-
-const validateRoutine = (body: RoutineBody | null) => {
-  const name = body?.name?.trim() ?? "";
-  const durationMinutes = Number(body?.durationMinutes);
-  const difficulty = body?.difficulty ?? "";
-  const exerciseKeys = Array.isArray(body?.exerciseKeys)
-    ? [...new Set(body.exerciseKeys.filter((key) => typeof key === "string"))]
-    : [];
-
-  if (!name) return { error: "Введите название набора" } as const;
-  if (name.length > 80) return { error: "Название не должно быть длиннее 80 символов" } as const;
-  if (!Number.isInteger(durationMinutes) || durationMinutes < 5 || durationMinutes > 240) {
-    return { error: "Укажите время от 5 до 240 минут" } as const;
-  }
-  if (!["easy", "medium", "hard"].includes(difficulty)) {
-    return { error: "Выберите сложность" } as const;
-  }
-  if (exerciseKeys.length === 0 || exerciseKeys.some((key) => !EXERCISES_BY_KEY[key])) {
-    return { error: "Добавьте хотя бы одно упражнение" } as const;
-  }
-  return { name, durationMinutes, difficulty, exerciseKeys } as const;
 };
 
 async function seedRoutines(userId: string) {
@@ -115,7 +86,6 @@ async function listRoutines(userId: string) {
 export async function GET(request: Request) {
   const user = await requireUser(request);
   if (!user) return json({ error: "Требуется вход" }, 401);
-  await ensureDatabase();
   await seedRoutines(user.id);
   return json({ routines: await listRoutines(user.id) });
 }
@@ -123,9 +93,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const user = await requireUser(request);
   if (!user) return json({ error: "Требуется вход" }, 401);
-  await ensureDatabase();
   await seedRoutines(user.id);
-  const parsed = validateRoutine(await readJson<RoutineBody>(request));
+  const parsed = parseRoutine(await readJson<RoutineInput>(request));
   if ("error" in parsed) return json({ error: parsed.error }, 400);
 
   const id = crypto.randomUUID();

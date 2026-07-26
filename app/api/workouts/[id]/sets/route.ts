@@ -1,5 +1,4 @@
 import { env } from "cloudflare:workers";
-import { ensureDatabase } from "@/db/ensure";
 import { requireUser } from "@/lib/auth";
 import { json, readJson } from "@/lib/http";
 
@@ -34,7 +33,6 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     return json({ error: "Некорректные данные подхода" }, 400);
   }
 
-  await ensureDatabase();
   const workout = await env.DB.prepare(
     "SELECT id FROM workout_sessions WHERE id = ?1 AND user_id = ?2 AND status = 'active'",
   ).bind(id, user.id).first();

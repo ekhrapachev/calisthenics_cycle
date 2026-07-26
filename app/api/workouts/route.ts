@@ -1,5 +1,4 @@
 import { env } from "cloudflare:workers";
-import { ensureDatabase } from "@/db/ensure";
 import { requireUser } from "@/lib/auth";
 import { EXERCISES_BY_KEY, type Exercise } from "@/lib/workout-catalog";
 import { json, readJson } from "@/lib/http";
@@ -32,7 +31,6 @@ const legacyExercises = (workoutType: string) => {
 export async function GET(request: Request) {
   const user = await requireUser(request);
   if (!user) return json({ error: "Требуется вход" }, 401);
-  await ensureDatabase();
   const rows = await env.DB.prepare(
     `SELECT ws.id, ws.workout_type AS workoutType, ws.status, ws.started_at AS startedAt,
             ws.completed_at AS completedAt, ws.duration_seconds AS durationSeconds,
@@ -76,7 +74,6 @@ export async function POST(request: Request) {
   const body = await readJson<StartBody>(request);
   const routineId = body?.routineId?.trim() ?? "";
   if (!routineId) return json({ error: "Выберите набор тренировки" }, 400);
-  await ensureDatabase();
   const active = await env.DB.prepare(
     `SELECT ws.id, ws.workout_type AS workoutType, ws.status, ws.started_at AS startedAt,
             snapshot.routine_id AS routineId, snapshot.routine_name AS routineName,

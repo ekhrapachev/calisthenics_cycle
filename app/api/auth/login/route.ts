@@ -1,6 +1,5 @@
 import { env } from "cloudflare:workers";
 import { createSession, isEmail, normalizeEmail, verifyPassword } from "@/lib/auth";
-import { ensureDatabase } from "@/db/ensure";
 import { json, readJson } from "@/lib/http";
 
 type LoginBody = { email?: string; password?: string };
@@ -12,7 +11,6 @@ export async function POST(request: Request) {
   const password = body?.password ?? "";
   if (!isEmail(email) || !password) return json({ error: "Неверная почта или пароль" }, 401);
 
-  await ensureDatabase();
   const user = await env.DB.prepare(
     `SELECT id, email, password_hash AS passwordHash, name, gender, birth_date AS birthDate
      FROM users WHERE email = ?1`,

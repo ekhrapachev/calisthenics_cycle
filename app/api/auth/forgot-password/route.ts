@@ -1,5 +1,4 @@
 import { env } from "cloudflare:workers";
-import { ensureDatabase } from "@/db/ensure";
 import { isEmail, normalizeEmail, randomToken } from "@/lib/auth";
 import { json, readJson } from "@/lib/http";
 
@@ -15,7 +14,6 @@ export async function POST(request: Request) {
   const email = normalizeEmail(body?.email ?? "");
   if (!isEmail(email)) return json({ error: "Введите корректную почту" }, 400);
 
-  await ensureDatabase();
   const user = await env.DB.prepare("SELECT id FROM users WHERE email = ?1").bind(email).first<{ id: string }>();
   if (user) {
     const token = randomToken();
