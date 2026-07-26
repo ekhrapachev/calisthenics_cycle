@@ -1,12 +1,18 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import {
   EXERCISE_CATALOG,
   EXERCISES_BY_KEY,
   type Exercise,
   type ExerciseCategory,
 } from "@/lib/workout-catalog";
+import {
+  EMPTY_WORKOUT_ANALYTICS,
+  formatLastCompletedDate,
+  type WorkoutAnalytics,
+} from "@/lib/home-analytics";
+import type { RoutinePreview } from "@/lib/workout-preview";
 import { getWorkoutExerciseStates } from "@/lib/workouts";
 
 type User = {
@@ -24,6 +30,7 @@ type Screen =
   | "routines"
   | "routine"
   | "routineEdit"
+  | "workoutPreview"
   | "exercise"
   | "rest"
   | "summary"
@@ -70,7 +77,11 @@ type ActiveWorkout = {
 };
 
 class ApiError extends Error {
-  constructor(message: string, readonly status: number) {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly payload: Record<string, unknown>,
+  ) {
     super(message);
   }
 }
@@ -85,6 +96,7 @@ const api = async <T,>(url: string, options?: RequestInit): Promise<T> => {
     throw new ApiError(
       typeof body.error === "string" ? body.error : "Что-то пошло не так",
       response.status,
+      body,
     );
   }
   return body as T;
@@ -105,6 +117,10 @@ const exerciseCountLabel = (count: number) => {
   if (mod10 === 1) return `${count} упражнение`;
   if (mod10 >= 2 && mod10 <= 4) return `${count} упражнения`;
   return `${count} упражнений`;
+};
+
+const trackAnalytics = (name: string, detail: Record<string, string | number>) => {
+  window.dispatchEvent(new CustomEvent("forma:analytics", { detail: { name, ...detail } }));
 };
 
 const focusableElements = (container: HTMLElement) =>
@@ -136,7 +152,12 @@ const trapDialogFocus = (event: KeyboardEvent, container: HTMLElement | null) =>
 export default function FormaApp() {
   const screenContentRef = useRef<HTMLDivElement>(null);
   const workoutPickerRef = useRef<HTMLElement>(null);
+  const workoutPickerListRef = useRef<HTMLDivElement>(null);
   const workoutPickerTriggerRef = useRef<HTMLButtonElement>(null);
+  const workoutPickerCardsRef = useRef(new Map<string, HTMLButtonElement>());
+  const workoutPickerScrollRef = useRef(0);
+  const previewTitleRef = useRef<HTMLHeadingElement>(null);
+  const startRequestRef = useRef(false);
   const activeWorkoutCardRef = useRef<HTMLButtonElement>(null);
   const activeWorkoutDetailsRef = useRef<HTMLElement>(null);
   const activeWorkoutDetailsTitleRef = useRef<HTMLHeadingElement>(null);
@@ -174,7 +195,13 @@ export default function FormaApp() {
   const [startingRoutineId, setStartingRoutineId] = useState<string | null>(null);
   const [resumingWorkout, setResumingWorkout] = useState(false);
   const [workoutPickerError, setWorkoutPickerError] = useState("");
+  const [previewRoutine, setPreviewRoutine] = useState<RoutinePreview | null>(null);
+  const [previewStatus, setPreviewStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [previewError, setPreviewError] = useState("");
+  const [previewStartError, setPreviewStartError] = useState("");
+  const [previewEntry, setPreviewEntry] = useState<"home" | "routine">("home");
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [analytics, setAnalytics] = useState<WorkoutAnalytics>(EMPTY_WORKOUT_ANALYTICS);
   const [activeWorkoutId, setActiveWorkoutId] = useState<string | null>(null);
   const [activeRoutineName, setActiveRoutineName] = useState("");
   const [activeExercises, setActiveExercises] = useState<Exercise[]>([]);
@@ -274,6 +301,7 @@ export default function FormaApp() {
       api<{
         active: ActiveWorkout | null;
         history: HistoryItem[];
+        analytics: WorkoutAnalytics;
       }>("/api/workouts"),
       ]);
       const nextProgressions: Record<string, string> = {};
@@ -283,6 +311,7 @@ export default function FormaApp() {
       setRoutines(routineData.routines);
       setProgressions(nextProgressions);
       setHistory(workoutData.history);
+      setAnalytics(workoutData.analytics);
       setActiveWorkoutId(workoutData.active?.id ?? null);
       setActiveRoutineName(workoutData.active?.routineName ?? "");
       setActiveExercises(workoutData.active?.exercises ?? []);
@@ -417,13 +446,9 @@ export default function FormaApp() {
     screenContentRef.current?.scrollTo({ top: 0 });
   }, [screen]);
 
-  const stats = useMemo(() => {
-    const total = history.length;
-    const streak = history.length ? Math.min(history.length, 6) : 0;
-    return { total, streak };
-  }, [history]);
+  const stats = analytics;
 
-  const currentCycleWorkout = (stats.total % 12) + 1;
+  const currentCycleWorkout = (stats.totalCompleted % 12) + 1;
 
   const authSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -592,6 +617,94 @@ export default function FormaApp() {
     window.requestAnimationFrame(() => workoutPickerTriggerRef.current?.focus());
   };
 
+  const loadRoutinePreview = useCallback(async (routineId: string) => {
+    setPreviewStatus("loading");
+    setPreviewError("");
+    setPreviewStartError("");
+    try {
+      const result = await api<{ routine: RoutinePreview }>(
+        `/api/routines/${routineId}/preview`,
+      );
+      setPreviewRoutine(result.routine);
+      setPreviewStatus("ready");
+    } catch (reason) {
+      if (reason instanceof ApiError && reason.status === 404) {
+        setRoutines((items) => items.filter((item) => item.id !== routineId));
+      }
+      setPreviewError(
+        reason instanceof Error ? reason.message : "Не удалось загрузить состав",
+      );
+      setPreviewStatus("error");
+    }
+  }, []);
+
+  const restorePickerContext = useCallback((routineId: string | null) => {
+    setScreen("home");
+    setWorkoutPickerOpen(true);
+    window.requestAnimationFrame(() => {
+      if (workoutPickerListRef.current) {
+        workoutPickerListRef.current.scrollTop = workoutPickerScrollRef.current;
+      }
+      if (routineId) workoutPickerCardsRef.current.get(routineId)?.focus();
+    });
+  }, []);
+
+  const leaveWorkoutPreview = useCallback(() => {
+    if (startRequestRef.current) return;
+    const routineId = previewRoutine?.id ?? selectedRoutineId;
+    if (previewEntry === "home") restorePickerContext(routineId);
+    else setScreen("routine");
+    if (routineId) {
+      trackAnalytics("workout_routine_preview_back_clicked", {
+        routine_id: routineId,
+      });
+    }
+  }, [previewEntry, previewRoutine?.id, restorePickerContext, selectedRoutineId]);
+
+  const backFromWorkoutPreview = useCallback(() => {
+    if (startRequestRef.current) return;
+    if (window.history.state?.formaScreen === "workout-preview") {
+      window.history.back();
+    } else {
+      leaveWorkoutPreview();
+    }
+  }, [leaveWorkoutPreview]);
+
+  const openRoutinePreview = (
+    routine: Routine,
+    entry: "home" | "routine",
+  ) => {
+    if (entry === "home") {
+      workoutPickerScrollRef.current = workoutPickerListRef.current?.scrollTop ?? 0;
+    }
+    setSelectedRoutineId(routine.id);
+    setPreviewEntry(entry);
+    setPreviewRoutine(null);
+    setWorkoutPickerOpen(false);
+    setScreen("workoutPreview");
+    window.history.pushState({ formaScreen: "workout-preview" }, "");
+    trackAnalytics("workout_routine_preview_opened", { routine_id: routine.id });
+    void loadRoutinePreview(routine.id);
+  };
+
+  useEffect(() => {
+    if (screen !== "workoutPreview") return;
+    previewTitleRef.current?.focus();
+    const handlePopState = () => leaveWorkoutPreview();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        backFromWorkoutPreview();
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [backFromWorkoutPreview, leaveWorkoutPreview, previewStatus, screen]);
+
   const openWorkout = (workout: ActiveWorkout, entry: "home" | "routine") => {
     setActiveWorkoutId(workout.id);
     setActiveRoutineName(workout.routineName || "Активная тренировка");
@@ -618,38 +731,68 @@ export default function FormaApp() {
     setActiveWorkoutId(null);
     setActiveExercises([]);
     setActiveResume(null);
-    const data = await api<{ history: HistoryItem[] }>("/api/workouts");
+    const data = await api<{ history: HistoryItem[]; analytics: WorkoutAnalytics }>("/api/workouts");
     setHistory(data.history);
+    setAnalytics(data.analytics);
     setScreen("summary");
   };
 
-  const startWorkout = async (routineId: string, entry: "home" | "routine") => {
-    if (startingRoutineId || resumingWorkout) return;
-    setStartingRoutineId(routineId);
-    setWorkoutPickerError("");
-    setError("");
+  const startWorkout = async () => {
+    if (
+      startRequestRef.current
+      || !previewRoutine
+      || previewStatus !== "ready"
+      || previewRoutine.exercises.length === 0
+    ) return;
+    startRequestRef.current = true;
+    setStartingRoutineId(previewRoutine.id);
+    setPreviewStartError("");
+    trackAnalytics("workout_start_confirmed", { routine_id: previewRoutine.id });
     try {
       const result = await api<{
         workout: ActiveWorkout;
+        existingActive?: boolean;
       }>("/api/workouts", {
         method: "POST",
-        body: JSON.stringify({ routineId }),
+        body: JSON.stringify({
+          routineId: previewRoutine.id,
+          routineRevision: previewRoutine.revision,
+        }),
       });
       setWorkoutPickerOpen(false);
-      openWorkout(result.workout, entry);
+      if (window.history.state?.formaScreen === "workout-preview") {
+        window.history.replaceState({}, "");
+      }
+      if (result.existingActive) {
+        setNotice("У вас уже есть активная тренировка");
+      }
+      trackAnalytics("workout_start_succeeded", {
+        routine_id: previewRoutine.id,
+      });
+      openWorkout(result.workout, previewEntry);
       if (!result.workout.resume) await completeActiveWorkout(result.workout.id);
     } catch (reason) {
       const message = reason instanceof Error ? reason.message : "Не удалось начать тренировку";
-      if (entry === "home") {
-        setWorkoutPickerOpen(true);
-        setWorkoutPickerError(message);
-        if (reason instanceof ApiError && reason.status === 404) {
-          setRoutines((items) => items.filter((item) => item.id !== routineId));
+      trackAnalytics("workout_start_failed", {
+        routine_id: previewRoutine.id,
+      });
+      if (reason instanceof ApiError && reason.payload.code === "routine_changed") {
+        const updated = reason.payload.routine as RoutinePreview | undefined;
+        if (updated) {
+          setPreviewRoutine(updated);
+          setPreviewStatus("ready");
         }
+        setPreviewStartError(
+          "Тренировка изменилась. Проверьте обновлённый состав.",
+        );
+      } else if (reason instanceof ApiError && reason.status === 404) {
+        setRoutines((items) => items.filter((item) => item.id !== previewRoutine.id));
+        setPreviewStartError("Набор больше недоступен. Вернитесь к выбору.");
       } else {
-        setError(message);
+        setPreviewStartError(message);
       }
     } finally {
+      startRequestRef.current = false;
       setStartingRoutineId(null);
     }
   };
@@ -810,6 +953,7 @@ export default function FormaApp() {
     setAuthScreen("email");
     setScreen("home");
     setHistory([]);
+    setAnalytics(EMPTY_WORKOUT_ANALYTICS);
     setRoutines([]);
     setProgressions({});
     setSelectedRoutineId(null);
@@ -823,6 +967,9 @@ export default function FormaApp() {
     setDiscardWorkoutError("");
     setDiscardingWorkout(false);
     setNotice("");
+    setPreviewRoutine(null);
+    setPreviewError("");
+    setPreviewStartError("");
     setHomeStatus("loading");
   };
 
@@ -903,6 +1050,7 @@ export default function FormaApp() {
     screen === "routines" ? "Конструктор тренировок"
       : screen === "routine" ? selectedRoutine?.name ?? "Набор"
         : screen === "routineEdit" ? (draft?.id ? "Редактирование" : "Новая тренировка")
+          : screen === "workoutPreview" ? "Состав тренировки"
           : screen === "exercise" || screen === "rest" ? activeRoutineName
             : screen === "summary" ? "Готово"
               : screen === "history" ? "История"
@@ -920,6 +1068,10 @@ export default function FormaApp() {
     }
     if (screen === "routineEdit") {
       cancelEdit();
+      return;
+    }
+    if (screen === "workoutPreview") {
+      backFromWorkoutPreview();
       return;
     }
     if (screen === "exercise" || screen === "rest") {
@@ -965,20 +1117,48 @@ export default function FormaApp() {
           {screen === "home" && (
             <div className="screen-stack home-dashboard">
               <div className="home-stat-grid">
-                <button
-                  className="home-stat-card history-stat-card"
-                  onClick={() => setScreen("history")}
-                  aria-label={`Открыть историю тренировок, всего ${stats.total}`}
-                >
-                  <strong>{stats.total}</strong>
-                  <span>Всего тренировок</span>
-                  <span className="nav-chevron history-chevron" aria-hidden="true">›</span>
-                </button>
-                <article className="home-stat-card streak-card">
-                  <strong>{stats.streak}</strong>
-                  <span>Тренировок<br />подряд</span>
-                  <div className="record-label">Личный рекорд <i aria-hidden="true">♨</i></div>
-                </article>
+                {homeStatus === "loading" ? (
+                  <>
+                    <div className="home-stat-card stat-card-skeleton" aria-label="Загружается количество тренировок">
+                      <i /><i /><i />
+                    </div>
+                    <div className="home-stat-card stat-card-skeleton" aria-label="Загружается последняя тренировка">
+                      <i /><i />
+                    </div>
+                  </>
+                ) : homeStatus === "error" ? (
+                  <div className="home-stat-error" role="alert">
+                    <strong>{homeError || "Не удалось загрузить статистику"}</strong>
+                    <button onClick={() => void loadHomeData()}>Повторить</button>
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      className="home-stat-card history-stat-card"
+                      onClick={() => {
+                        trackAnalytics("home_history_opened", {
+                          source: "total_workouts_card",
+                        });
+                        setScreen("history");
+                      }}
+                      aria-label={`Открыть историю тренировок, всего ${stats.totalCompleted}`}
+                    >
+                      <strong>{stats.totalCompleted}</strong>
+                      <span className="stat-label">Всего тренировок</span>
+                      <span className="stat-action">
+                        История
+                        <i className="nav-chevron" aria-hidden="true">›</i>
+                      </span>
+                    </button>
+                    <article className="home-stat-card last-workout-card">
+                      <strong>{formatLastCompletedDate(stats.lastCompletedAt)}</strong>
+                      <span className="stat-label">Последняя тренировка</span>
+                      {stats.lastCompletedAt === null && (
+                        <span className="stat-empty-note">Ещё не было</span>
+                      )}
+                    </article>
+                  </>
+                )}
               </div>
 
               <section className="cycle-card">
@@ -1105,6 +1285,77 @@ export default function FormaApp() {
                 <button className="secondary-button" onClick={editRoutine}>Редактировать</button>
                 <button className="text-danger-button" onClick={() => setDeleteConfirmOpen(true)}>Удалить набор</button>
               </div>
+            </div>
+          )}
+
+          {screen === "workoutPreview" && (
+            <div className="screen-stack workout-preview-screen">
+              {previewStatus === "loading" && (
+                <div className="preview-loading" aria-label="Загружается состав тренировки">
+                  <div className="preview-title-skeleton"><i /><i /><i /></div>
+                  {Array.from({ length: 3 }, (_, index) => (
+                    <div className="preview-row-skeleton" key={index}><i /><span /><span /></div>
+                  ))}
+                </div>
+              )}
+              {previewStatus === "error" && (
+                <section className="preview-error-state" role="alert">
+                  <span aria-hidden="true">!</span>
+                  <h1 ref={previewTitleRef} tabIndex={-1}>Не удалось загрузить состав</h1>
+                  <p>{previewError}</p>
+                  <button
+                    className="primary-button"
+                    onClick={() => selectedRoutineId && void loadRoutinePreview(selectedRoutineId)}
+                  >
+                    Повторить
+                  </button>
+                  <button className="secondary-button" onClick={backFromWorkoutPreview}>
+                    Назад
+                  </button>
+                </section>
+              )}
+              {previewStatus === "ready" && previewRoutine && (
+                <>
+                  <section className="workout-preview-title">
+                    <span className="eyebrow">Перед началом</span>
+                    <h1 ref={previewTitleRef} tabIndex={-1}>{previewRoutine.name}</h1>
+                    <div className="workout-preview-meta" aria-label={`${difficultyLabel[previewRoutine.difficulty]}, ${exerciseCountLabel(previewRoutine.exercises.length)}, ${previewRoutine.durationMinutes} минут`}>
+                      <span>{difficultyLabel[previewRoutine.difficulty]}</span>
+                      <span>{exerciseCountLabel(previewRoutine.exercises.length)}</span>
+                      <span>{previewRoutine.durationMinutes} мин</span>
+                    </div>
+                  </section>
+                  {previewRoutine.exercises.length > 0 ? (
+                    <div className="workout-preview-list">
+                      {previewRoutine.exercises.map((exercise, index) => (
+                        <article className="workout-preview-exercise" key={`${exercise.key}:${index}`}>
+                          <span className="exercise-order">{index + 1}</span>
+                          <span className="exercise-icon" aria-hidden="true">{exercise.icon}</span>
+                          <span className="workout-preview-exercise-copy">
+                            <strong>{exercise.name}</strong>
+                            <small>
+                              {exercise.sets} × {exercise.target} {exercise.unit} · {exercise.defaultProgression}
+                            </small>
+                          </span>
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <section className="preview-empty-state">
+                      <span aria-hidden="true">＋</span>
+                      <h2>В этой тренировке пока нет упражнений</h2>
+                      <p>Вернитесь к выбору или добавьте упражнения в конструкторе.</p>
+                      <button className="secondary-button" onClick={backFromWorkoutPreview}>Назад</button>
+                    </section>
+                  )}
+                  {previewStartError && (
+                    <p className="preview-start-error" role="alert">{previewStartError}</p>
+                  )}
+                  <p className="preview-start-note">
+                    Тренировка начнётся только после подтверждения.
+                  </p>
+                </>
+              )}
             </div>
           )}
 
@@ -1252,7 +1503,7 @@ export default function FormaApp() {
             <div className="screen-stack summary-screen">
               <div className="success-orbit">✓</div>
               <div className="page-title centered"><span className="eyebrow">Тренировка завершена</span><h1>Отличная<br />работа</h1><p>{activeRoutineName} · {durationLabel(summary.durationSeconds)}</p></div>
-              <div className="stat-grid"><article><strong>{summary.setCount}</strong><span>подходов</span></article><article><strong>{history.length}</strong><span>всего тренировок</span></article></div>
+              <div className="stat-grid"><article><strong>{summary.setCount}</strong><span>подходов</span></article><article><strong>{analytics.totalCompleted}</strong><span>всего тренировок</span></article></div>
               <button className="primary-button" onClick={() => setScreen("home")}>На главную</button>
             </div>
           )}
@@ -1276,7 +1527,7 @@ export default function FormaApp() {
               <section className="profile-card">
                 <div><span>Дата рождения</span><strong>{new Date(`${user.birthDate}T00:00:00`).toLocaleDateString("ru-RU")}</strong></div>
                 <div><span>Пол</span><strong>{user.gender === "male" ? "Мужской" : user.gender === "female" ? "Женский" : "Не указан"}</strong></div>
-                <div><span>Тренировок</span><strong>{history.length}</strong></div>
+                <div><span>Тренировок</span><strong>{analytics.totalCompleted}</strong></div>
               </section>
               <button className="secondary-button danger-button" onClick={logout}>Выйти из аккаунта</button>
             </div>
@@ -1291,12 +1542,6 @@ export default function FormaApp() {
 
         {screen === "home" && (
           <div className="screen-action home-workout-action">
-            {homeStatus === "error" && (
-              <div className="home-action-error" role="alert">
-                <span>{homeError}</span>
-                <button onClick={() => void loadHomeData()}>Повторить</button>
-              </div>
-            )}
             {homeStatus === "loading" && (
               <div className="active-workout-skeleton" aria-label="Загружается активная тренировка">
                 <span />
@@ -1364,9 +1609,27 @@ export default function FormaApp() {
             <button
               disabled={busy || Boolean(startingRoutineId)}
               className="primary-button"
-              onClick={() => void startWorkout(selectedRoutine.id, "routine")}
+              onClick={activeWorkoutId
+                ? () => void resumeWorkout()
+                : () => openRoutinePreview(selectedRoutine, "routine")}
             >
               {activeWorkoutId ? "Продолжить тренировку" : "Начать тренировку"}
+            </button>
+          </div>
+        )}
+        {screen === "workoutPreview" && (
+          <div className="screen-action workout-preview-action">
+            <button
+              disabled={
+                previewStatus !== "ready"
+                || !previewRoutine
+                || previewRoutine.exercises.length === 0
+                || Boolean(startingRoutineId)
+              }
+              className="primary-button"
+              onClick={() => void startWorkout()}
+            >
+              {startingRoutineId ? "Начинаем…" : "Начать тренировку"}
             </button>
           </div>
         )}
@@ -1567,21 +1830,24 @@ export default function FormaApp() {
             <div className="workout-picker-heading">
               <div>
                 <h2 id="workout-picker-title">Выбери тренировку</h2>
-                <p>Нажми на тренировку, чтобы сразу начать.</p>
+                <p>Выбери набор, чтобы проверить состав.</p>
               </div>
               <button className="sheet-close-button" onClick={closeWorkoutPicker} aria-label="Закрыть">×</button>
             </div>
             {workoutPickerError && <p className="picker-error" role="alert">{workoutPickerError}</p>}
             {routines.length > 0 ? (
-              <div className="workout-picker-list">
+              <div className="workout-picker-list" ref={workoutPickerListRef}>
                 {routines.map((routine) => {
-                  const isStarting = startingRoutineId === routine.id;
                   return (
                     <button
                       key={routine.id}
+                      ref={(element) => {
+                        if (element) workoutPickerCardsRef.current.set(routine.id, element);
+                        else workoutPickerCardsRef.current.delete(routine.id);
+                      }}
                       className="workout-picker-card"
-                      disabled={Boolean(startingRoutineId)}
-                      onClick={() => void startWorkout(routine.id, "home")}
+                      aria-label={`Проверить состав тренировки ${routine.name}`}
+                      onClick={() => openRoutinePreview(routine, "home")}
                     >
                       <span className="routine-icon">
                         {EXERCISES_BY_KEY[routine.exerciseKeys[0]]?.icon ?? "＋"}
@@ -1591,9 +1857,7 @@ export default function FormaApp() {
                         <small>{exerciseCountLabel(routine.exerciseKeys.length)} · {routine.durationMinutes} мин</small>
                         <i className={`difficulty ${routine.difficulty}`}>{difficultyLabel[routine.difficulty]}</i>
                       </span>
-                      <span className={`workout-start-mark ${isStarting ? "loading" : ""}`} aria-hidden="true">
-                        {isStarting ? "…" : "▶"}
-                      </span>
+                      <span className="nav-chevron" aria-hidden="true">›</span>
                     </button>
                   );
                 })}
@@ -1606,7 +1870,6 @@ export default function FormaApp() {
             )}
             <button
               className={routines.length > 0 ? "secondary-button" : "primary-button"}
-              disabled={Boolean(startingRoutineId)}
               onClick={() => {
                 setWorkoutPickerOpen(false);
                 if (routines.length === 0) createRoutine("routines");

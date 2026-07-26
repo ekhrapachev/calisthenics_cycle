@@ -1,5 +1,9 @@
 # Прямые переходы с главной
 
+> Следующая итерация аналитических карточек описана в
+> [home_analytics_and_workout_preview](../home_analytics_and_workout_preview/README.md)
+> и имеет приоритет для карточек `Всего тренировок` и `Последняя тренировка`.
+
 Feature slug: `direct_home_navigation`
 
 Статус: **SPECIFIED · PROTOTYPED / реализация не начата**

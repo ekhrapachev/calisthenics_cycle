@@ -2,9 +2,11 @@ import { env } from "cloudflare:workers";
 import { requireUser } from "@/lib/auth";
 import { EXERCISES_BY_KEY, type Exercise } from "@/lib/workout-catalog";
 import { json, readJson } from "@/lib/http";
-import { findResumePosition } from "@/lib/workouts";
+import type { WorkoutAnalytics } from "@/lib/home-analytics";
+import { loadRoutinePreview } from "@/lib/workout-preview";
+import { findResumePosition, WORKOUT_ANALYTICS_SQL } from "@/lib/workouts";
 
-type StartBody = { routineId?: string };
+type StartBody = { routineId?: string; routineRevision?: string };
 type WorkoutRow = {
   id: string;
   workoutType: string;
@@ -84,7 +86,7 @@ export async function GET(request: Request) {
   const user = await requireUser(request);
   if (!user) return json({ error: "Требуется вход" }, 401);
 
-  const [active, historyRows] = await Promise.all([
+  const [active, historyRows, analytics] = await Promise.all([
     readActiveWorkout(user.id),
     env.DB.prepare(
       `SELECT ws.id, ws.workout_type AS workoutType, ws.status, ws.started_at AS startedAt,
@@ -97,11 +99,19 @@ export async function GET(request: Request) {
        LEFT JOIN workout_session_snapshots snapshot ON snapshot.workout_session_id = ws.id
        WHERE ws.user_id = ?1 AND ws.status = 'completed'
        GROUP BY ws.id
-       ORDER BY ws.started_at DESC
+       ORDER BY ws.completed_at DESC
        LIMIT 30`,
     ).bind(user.id).all<WorkoutRow>(),
+    env.DB.prepare(WORKOUT_ANALYTICS_SQL).bind(user.id).first<WorkoutAnalytics>(),
   ]);
-  return json({ active, history: historyRows.results.map((item) => mapWorkout(item)) });
+  return json({
+    active,
+    history: historyRows.results.map((item) => mapWorkout(item)),
+    analytics: {
+      totalCompleted: Number(analytics?.totalCompleted ?? 0),
+      lastCompletedAt: analytics?.lastCompletedAt ?? null,
+    },
+  });
 }
 
 export async function POST(request: Request) {
@@ -109,47 +119,32 @@ export async function POST(request: Request) {
   if (!user) return json({ error: "Требуется вход" }, 401);
 
   const existingActive = await readActiveWorkout(user.id);
-  if (existingActive) return json({ workout: existingActive });
+  if (existingActive) return json({ workout: existingActive, existingActive: true });
 
   const body = await readJson<StartBody>(request);
   const routineId = body?.routineId?.trim() ?? "";
+  const routineRevision = body?.routineRevision?.trim() ?? "";
   if (!routineId) return json({ error: "Выберите набор тренировки" }, 400);
+  if (!routineRevision) return json({ error: "Сначала проверьте состав тренировки" }, 400);
 
-  const routine = await env.DB.prepare(
-    `SELECT id, name, duration_minutes AS durationMinutes, difficulty
-     FROM workout_routines WHERE id = ?1 AND user_id = ?2`,
-  ).bind(routineId, user.id).first<{
-    id: string;
-    name: string;
-    durationMinutes: number;
-    difficulty: string;
-  }>();
-  if (!routine) return json({ error: "Набор не найден" }, 404);
-
-  const [exerciseRows, progressionRows] = await Promise.all([
-    env.DB.prepare(
-      `SELECT exercise_key AS exerciseKey
-       FROM workout_routine_exercises
-       WHERE routine_id = ?1
-       ORDER BY position ASC`,
-    ).bind(routineId).all<{ exerciseKey: string }>(),
-    env.DB.prepare(
-      `SELECT exercise_key AS exerciseKey, progression
-       FROM progression_selections
-       WHERE user_id = ?1 AND workout_type = ?2`,
-    ).bind(user.id, `routine:${routineId}`).all<{ exerciseKey: string; progression: string }>(),
-  ]);
-  const progressionMap = new Map(
-    progressionRows.results.map((row) => [row.exerciseKey, row.progression]),
-  );
-  const exercises = exerciseRows.results
-    .map((row) => EXERCISES_BY_KEY[row.exerciseKey])
-    .filter((exercise): exercise is Exercise => Boolean(exercise));
-  const snapshotExercises = exercises.map((exercise) => ({
-    ...exercise,
-    defaultProgression: progressionMap.get(exercise.key) ?? exercise.defaultProgression,
-  }));
-  if (snapshotExercises.length === 0) return json({ error: "В наборе нет упражнений" }, 400);
+  const routine = await loadRoutinePreview(env.DB, user.id, routineId);
+  if (!routine) {
+    return json({ error: "Набор не найден", code: "routine_not_found" }, 404);
+  }
+  if (routine.exercises.length === 0) {
+    return json({
+      error: "В этой тренировке пока нет упражнений",
+      code: "routine_empty",
+      routine,
+    }, 400);
+  }
+  if (routine.revision !== routineRevision) {
+    return json({
+      error: "Тренировка изменилась. Проверьте обновлённый состав.",
+      code: "routine_changed",
+      routine,
+    }, 409);
+  }
 
   const id = crypto.randomUUID();
   const startedAt = Date.now();
@@ -169,12 +164,14 @@ export async function POST(request: Request) {
         routine.name,
         routine.durationMinutes,
         routine.difficulty,
-        JSON.stringify(snapshotExercises),
+        JSON.stringify(routine.exercises),
       ),
     ]);
   } catch (reason) {
     const concurrentActive = await readActiveWorkout(user.id);
-    if (concurrentActive) return json({ workout: concurrentActive });
+    if (concurrentActive) {
+      return json({ workout: concurrentActive, existingActive: true });
+    }
     throw reason;
   }
 
@@ -191,8 +188,8 @@ export async function POST(request: Request) {
       routineName: routine.name,
       durationMinutes: routine.durationMinutes,
       difficulty: routine.difficulty,
-      exercises: snapshotExercises,
-      resume: { exerciseIndex: 0, setNumber: 1 },
+    exercises: routine.exercises,
+    resume: { exerciseIndex: 0, setNumber: 1 },
     },
   }, 201);
 }

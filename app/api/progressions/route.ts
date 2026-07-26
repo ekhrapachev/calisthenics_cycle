@@ -1,6 +1,7 @@
 import { env } from "cloudflare:workers";
 import { requireUser } from "@/lib/auth";
 import { json, readJson } from "@/lib/http";
+import { EXERCISES_BY_KEY } from "@/lib/workout-catalog";
 
 type ProgressionBody = {
   routineId?: string;
@@ -27,6 +28,10 @@ export async function PUT(request: Request) {
   const exerciseKey = body?.exerciseKey?.trim() ?? "";
   const progression = body?.progression?.trim() ?? "";
   if (!routineId || !exerciseKey || !progression) {
+    return json({ error: "Некорректная прогрессия" }, 400);
+  }
+  const catalogExercise = EXERCISES_BY_KEY[exerciseKey];
+  if (!catalogExercise?.progressions.includes(progression)) {
     return json({ error: "Некорректная прогрессия" }, 400);
   }
   const exercise = await env.DB.prepare(

@@ -47,3 +47,9 @@ export function getWorkoutExerciseStates(
 
 export const DISCARD_ACTIVE_WORKOUT_SQL =
   "DELETE FROM workout_sessions WHERE id = ?1 AND user_id = ?2 AND status = 'active'";
+
+export const WORKOUT_ANALYTICS_SQL = `
+  SELECT COUNT(*) AS totalCompleted, MAX(completed_at) AS lastCompletedAt
+  FROM workout_sessions
+  WHERE user_id = ?1 AND status = 'completed' AND completed_at IS NOT NULL
+`;

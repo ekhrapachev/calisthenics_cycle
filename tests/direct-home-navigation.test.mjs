@@ -12,7 +12,8 @@ const styles = readFileSync(
 );
 
 test("home exposes direct, single-button navigation to history, routines, and profile", () => {
-  assert.match(appSource, /aria-label=\{`Открыть историю тренировок, всего \$\{stats\.total\}`\}/);
+  assert.match(appSource, /aria-label=\{`Открыть историю тренировок, всего \$\{stats\.totalCompleted\}`\}/);
+  assert.match(appSource, /className="stat-action"[\s\S]*История[\s\S]*className="nav-chevron"/);
   assert.match(appSource, /className="constructor-card"[\s\S]*aria-label="Открыть конструктор тренировок"/);
   assert.match(appSource, /className="icon-button profile-button"[\s\S]*aria-label="Открыть профиль"/);
   assert.doesNotMatch(appSource, /homeMenuOpen|home-menu|more-button|Открыть меню/);
@@ -27,8 +28,8 @@ test("routines uses the constructor name and workout CTA", () => {
 
 test("navigation chevrons share the required visual token", () => {
   assert.match(styles, /\.nav-chevron\s*\{[\s\S]*font-size:\s*27px;[\s\S]*font-weight:\s*300;[\s\S]*line-height:\s*1;/);
-  assert.match(styles, /\.history-chevron\s*\{[\s\S]*top:\s*50%;[\s\S]*right:\s*15px;[\s\S]*transform:\s*translateY\(-50%\);/);
-  assert.match(appSource, /className="nav-chevron history-chevron" aria-hidden="true">›/);
+  assert.match(styles, /\.stat-action \.nav-chevron\s*\{[\s\S]*place-items:\s*center;/);
+  assert.match(appSource, /className="stat-action"[\s\S]*className="nav-chevron" aria-hidden="true">›/);
   assert.match(appSource, /className="constructor-card"[\s\S]*className="nav-chevron" aria-hidden="true">›/);
   assert.match(appSource, /routines\.map[\s\S]*className="nav-chevron" aria-hidden="true">›<\/span>/);
 });
