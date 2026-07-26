@@ -15,6 +15,13 @@
       "when": 1785050927981,
       "tag": "0001_fine_satana",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1785068191429,
+      "tag": "0002_gigantic_mandarin",
+      "breakpoints": true
     }
   ]
 }

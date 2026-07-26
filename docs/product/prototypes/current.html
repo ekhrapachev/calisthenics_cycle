@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f5f7ef">
+  <title>FORMA — новая главная и запуск тренировки</title>
+  <style>
+    :root {
+      --ink:#151714; --muted:#777c72; --paper:#f5f7ef; --card:#fff;
+      --line:#dfe3d8; --soft:#edf0e7; --lime:#b5ff00; --deep:#8fdc00;
+      --danger:#c3392d; --shadow:0 28px 80px rgba(44,49,40,.16);
+    }
+    * { box-sizing:border-box }
+    html,body { min-height:100%; margin:0 }
+    body {
+      color:var(--ink); background:
+        radial-gradient(circle at 80% 8%,rgba(181,255,0,.2),transparent 28rem),#e7eae2;
+      font:14px/1.4 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    }
+    button,input { color:inherit; font:inherit }
+    button { cursor:pointer }
+    button:focus-visible,input:focus-visible { outline:3px solid rgba(143,220,0,.35); outline-offset:2px }
+    .stage {
+      min-height:100dvh; display:grid; grid-template-columns:210px minmax(320px,470px);
+      place-content:center; gap:34px; padding:24px;
+    }
+    .map { display:grid; gap:7px; align-content:center }
+    .map strong { margin:0 0 7px 8px; color:#60665d; font-size:11px; letter-spacing:.14em; text-transform:uppercase }
+    .map button {
+      padding:10px 12px; display:flex; align-items:center; gap:10px; border:1px solid transparent;
+      border-radius:13px; background:rgba(255,255,255,.45); text-align:left; font-weight:750;
+    }
+    .map button:hover,.map button.active { background:#fff; border-color:var(--line); transform:translateX(2px) }
+    .map i {
+      width:25px; height:25px; display:grid; place-items:center; border-radius:8px;
+      background:#efffd0; font-size:10px; font-style:normal;
+    }
+    .phone {
+      position:relative; width:min(100%,470px); height:min(920px,calc(100dvh - 38px));
+      min-height:650px; display:flex; flex-direction:column; overflow:hidden;
+      border:1px solid #d2d6cd; border-radius:34px; background:var(--paper); box-shadow:var(--shadow);
+    }
+    .status {
+      height:28px; padding:9px 22px 0; display:flex; justify-content:space-between;
+      font-size:11px; font-weight:850; pointer-events:none;
+    }
+    .topbar {
+      min-height:63px; padding:9px 18px 10px; display:flex; align-items:center; justify-content:space-between;
+      gap:12px;
+    }
+    .topbar h1 { margin:0; font-size:31px; line-height:1; letter-spacing:-.05em }
+    .top-title { max-width:75%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:850 }
+    .icon-btn {
+      width:42px; height:42px; display:grid; place-items:center; border:1px solid var(--line);
+      border-radius:14px; background:rgba(255,255,255,.78); font-size:20px;
+    }
+    .screen { flex:1; min-height:0; padding:0 18px 22px; overflow:auto; scrollbar-width:none }
+    .screen::-webkit-scrollbar { display:none }
+    .stack { display:grid; gap:12px; padding:3px 0 18px }
+    .card { border:1px solid rgba(218,222,213,.95); border-radius:21px; background:rgba(255,255,255,.94) }
+    .eyebrow {
+      display:block; margin:0 0 5px; color:#697064; font-size:11px; font-weight:850;
+      letter-spacing:.12em; text-transform:uppercase;
+    }
+    .page-title { padding:6px 2px 3px }
+    .page-title h1 { margin:0; font-size:38px; line-height:1; letter-spacing:-.055em }
+    .page-title p { margin:12px 0 0; color:var(--muted) }
+    .primary,.secondary,.danger,.new-btn {
+      width:100%; min-height:54px; border-radius:16px; font-weight:850;
+    }
+    .primary { border:0; background:var(--lime) }
+    .secondary,.new-btn { border:1px solid var(--line); background:rgba(255,255,255,.75) }
+    .danger { border:1px solid #ffd1cb; color:var(--danger); background:#fff3f1 }
+    .action {
+      flex:0 0 auto; padding:10px 18px max(14px,env(safe-area-inset-bottom));
+      border-top:1px solid var(--line); background:rgba(250,251,247,.94); backdrop-filter:blur(18px);
+    }
+    .home-action { display:grid; gap:9px }
+    .active-workout {
+      padding:0 2px; display:flex; align-items:center; justify-content:space-between; gap:12px;
+    }
+    .active-workout span { min-width:0; display:grid; gap:1px }
+    .active-workout small { color:var(--muted); font-size:11px }
+    .active-workout b { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px }
+    .active-workout i {
+      width:32px; height:32px; display:grid; place-items:center; flex:0 0 auto;
+      border-radius:10px; background:var(--lime); font-style:normal; font-weight:900;
+    }
+    .stats { display:grid; grid-template-columns:1fr 1fr; gap:9px }
+    .stat { min-height:128px; padding:17px 15px; display:flex; flex-direction:column }
+    .stat b { font-size:39px; line-height:1; letter-spacing:-.05em }
+    .stat span { margin-top:10px; color:var(--muted) }
+    .stat small { margin-top:auto; font-weight:800 }
+    .cycle,.progress { padding:14px 15px }
+    .cycle h2 { margin:2px 0 10px; font-size:19px }
+    .track { display:grid; grid-template-columns:repeat(12,1fr); align-items:center; gap:4px }
+    .track i { height:8px; border-radius:8px; background:#e2e5df }
+    .track i.done { background:#aaf000 }
+    .track i.current { height:17px; border:3px solid #92df00; border-radius:50%; background:#fff }
+    .cycle p { margin:9px 0 0; color:var(--muted); font-size:12px }
+    .progress h2 { margin:0 0 7px; font-size:14px; font-weight:600 }
+    .progress-row {
+      min-height:40px; display:grid; grid-template-columns:30px minmax(0,1fr) auto;
+      align-items:center; gap:8px; border-top:1px solid #edf0ea;
+    }
+    .progress-row:first-of-type { border-top:0 }
+    .progress-row span:nth-child(2) { overflow:hidden; white-space:nowrap; text-overflow:ellipsis }
+    .progress-row small { white-space:nowrap; color:var(--muted) }
+    .progress-row small b { color:var(--ink) }
+    .section-head { display:flex; align-items:center; justify-content:space-between; padding-top:6px }
+    .section-head h2 { margin:0; font-size:24px; letter-spacing:-.04em }
+    .link-btn { padding:5px; border:0; background:transparent; color:#5f645d }
+    .routine-list { display:grid; gap:9px }
+    .routine-list.compact { gap:0 }
+    .routine-card {
+      width:100%; min-height:98px; padding:11px 14px 11px 11px; display:grid;
+      grid-template-columns:58px minmax(0,1fr) 19px; align-items:center; gap:12px;
+      border:1px solid var(--line); border-radius:18px; background:#fff; text-align:left;
+    }
+    .compact .routine-card + .routine-card { margin-top:-1px }
+    .routine-icon,.exercise-icon {
+      display:grid; place-items:center; border:1px solid #e0e5d7;
+      background:linear-gradient(145deg,#f9fbf4,#f1f4ea); font-weight:900;
+    }
+    .routine-icon { width:58px; height:58px; border-radius:15px; font-size:23px }
+    .routine-copy { min-width:0; display:grid; justify-items:start; gap:3px }
+    .routine-copy b { max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:17px }
+    .routine-copy small { color:var(--muted) }
+    .difficulty { padding:2px 7px; border:1px solid var(--line); border-radius:7px; font-size:10px; font-style:normal }
+    .difficulty.medium { background:#f2ffd8 }
+    .difficulty.hard { border-color:#9bdd23; background:#fbfff2 }
+    .arrow { justify-self:end; font-size:28px; font-weight:300 }
+    .new-btn { border-color:#2e312d; font-size:15px }
+    .detail-head { display:flex; align-items:center; gap:16px; padding:8px 2px }
+    .detail-head .routine-icon { width:76px; height:76px; font-size:30px }
+    .detail-head h1 { margin:0 0 7px; font-size:33px; line-height:1; letter-spacing:-.05em }
+    .meta { min-height:63px; display:grid; grid-template-columns:1fr 1fr }
+    .meta span { display:grid; place-items:center; font-weight:850 }
+    .meta span + span { border-left:1px solid var(--line) }
+    .exercise-list { display:grid; gap:7px }
+    .exercise-row {
+      min-height:67px; padding:9px; display:grid; grid-template-columns:24px 42px minmax(0,1fr) auto;
+      align-items:center; gap:8px;
+    }
+    .exercise-icon { width:42px; height:42px; border-radius:12px; font-size:18px }
+    .exercise-row p { min-width:0; margin:0; display:grid }
+    .exercise-row p b { overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+    .exercise-row p small { color:var(--muted) }
+    .mini-btn { padding:7px; border:0; border-radius:9px; background:var(--soft); font-size:11px; font-weight:750 }
+    .secondary-actions { display:grid; grid-template-columns:1fr 1fr; gap:9px }
+    .field { display:grid; gap:6px; color:#5d625a; font-size:12px; font-weight:750 }
+    .field input {
+      width:100%; min-height:48px; padding:0 13px; border:1px solid var(--line);
+      border-radius:13px; background:#fff;
+    }
+    .field-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px }
+    .difficulty-pick { display:grid; grid-template-columns:repeat(3,1fr); gap:5px }
+    .difficulty-pick button { min-height:48px; border:1px solid var(--line); border-radius:13px; background:#fff }
+    .difficulty-pick button.active { border-color:#91d300; background:#efffd0 }
+    .editor-row { grid-template-columns:26px 42px minmax(0,1fr) auto auto }
+    .order { display:grid; gap:3px }
+    .order button,.remove { width:29px; height:27px; border:0; border-radius:8px; background:var(--soft) }
+    .remove { color:var(--danger); font-size:18px }
+    .auth { min-height:100%; display:flex; flex-direction:column; justify-content:center; gap:20px; padding:8px }
+    .brand { display:flex; align-items:center; gap:11px; font-size:18px; font-weight:900; letter-spacing:.12em }
+    .brand i { width:40px; height:40px; display:grid; place-items:center; border-radius:12px; background:var(--lime); font-style:italic }
+    .auth h1 { margin:0; font-size:40px; line-height:.98; letter-spacing:-.055em }
+    .auth p { margin:9px 0 0; color:var(--muted) }
+    .auth-card { padding:15px; display:grid; gap:11px }
+    .exercise-stage { display:grid; gap:14px; text-align:center; padding:18px 0 }
+    .exercise-stage h1 { margin:0; font-size:36px; line-height:1; letter-spacing:-.05em }
+    .set-card { padding:22px; text-align:center }
+    .set-card > b { display:block; margin:14px 0 0; font-size:74px; line-height:1 }
+    .counter { margin:18px auto 0; display:grid; grid-template-columns:48px 1fr 48px; align-items:center; gap:8px }
+    .counter button { height:48px; border:0; border-radius:14px; background:var(--soft); font-size:22px }
+    .timer {
+      width:220px; aspect-ratio:1; margin:16px auto; display:grid; place-items:center;
+      border:18px solid #e3e7dc; border-top-color:var(--lime); border-radius:50%;
+    }
+    .timer b { font-size:43px; letter-spacing:-.05em }
+    .efforts { padding:14px; display:grid; grid-template-columns:repeat(3,1fr); gap:6px }
+    .efforts button { min-height:54px; border:1px solid var(--line); border-radius:13px; background:#fff; font-size:12px }
+    .efforts button.active { border-color:#91d300; background:#efffd0 }
+    .success { display:grid; justify-items:center; gap:18px; padding:40px 0; text-align:center }
+    .success-mark { width:104px; height:104px; display:grid; place-items:center; border-radius:50%; background:var(--lime); font-size:52px; font-weight:900 }
+    .history-item,.profile-card { padding:14px }
+    .history-item { display:flex; justify-content:space-between; gap:10px }
+    .history-item p { margin:0; display:grid }
+    .history-item small { color:var(--muted) }
+    .profile-card { display:grid; gap:0 }
+    .profile-card div { padding:12px 0; display:flex; justify-content:space-between; border-top:1px solid var(--line) }
+    .profile-card div:first-child { border-top:0 }
+    .overlay {
+      position:fixed; z-index:30; inset:0; display:grid; place-items:center; padding:20px;
+      background:rgba(20,23,18,.46); backdrop-filter:blur(4px);
+    }
+    .sheet {
+      width:min(430px,100%); max-height:min(720px,90dvh); padding:18px; overflow:auto;
+      border-radius:24px; background:var(--paper); box-shadow:var(--shadow);
+    }
+    .sheet h2 { margin:0 0 13px; font-size:26px }
+    .overlay.bottom { place-items:end center }
+    .sheet-handle { width:42px; height:4px; margin:0 auto 15px; border-radius:9px; background:#c9cec3 }
+    .sheet-head { display:flex; align-items:start; justify-content:space-between; gap:14px }
+    .sheet-head h2 { margin-bottom:4px }
+    .sheet-head p { margin:0 0 15px; color:var(--muted) }
+    .sheet-close {
+      width:36px; height:36px; display:grid; place-items:center; flex:0 0 auto;
+      border:1px solid var(--line); border-radius:12px; background:#fff; font-size:18px;
+    }
+    .picker-list { display:grid; gap:8px; margin:4px 0 12px }
+    .picker-list .routine-card { min-height:86px; grid-template-columns:52px minmax(0,1fr) 30px }
+    .picker-list .routine-icon { width:52px; height:52px; border-radius:13px; font-size:21px }
+    .start-mark {
+      width:30px; height:30px; display:grid; place-items:center; border-radius:50%;
+      color:#243000; background:var(--lime); font-size:13px; font-weight:900;
+    }
+    .empty-picker { padding:26px 14px; text-align:center }
+    .empty-picker strong { display:block; margin-bottom:6px; font-size:18px }
+    .empty-picker p { margin:0; color:var(--muted) }
+    .catalog { display:grid; gap:7px; margin:12px 0 }
+    .catalog button {
+      min-height:58px; padding:8px; display:grid; grid-template-columns:42px 1fr auto;
+      align-items:center; gap:9px; border:1px solid var(--line); border-radius:14px; background:#fff; text-align:left;
+    }
+    .catalog button.selected { border-color:#91d300; background:#f6ffe5 }
+    .catalog button:disabled { opacity:.5 }
+    .hidden { display:none!important }
+    .toast {
+      position:absolute; z-index:20; left:18px; right:18px; bottom:20px; padding:12px 14px;
+      border-radius:13px; color:#fff; background:#20241e; text-align:center; opacity:0;
+      transform:translateY(10px); pointer-events:none; transition:.2s;
+    }
+    .toast.show { opacity:1; transform:none }
+    @media(max-width:760px) {
+      .stage { display:block; padding:0 }
+      .map { display:none }
+      .phone { width:100%; height:100dvh; min-height:620px; border:0; border-radius:0; box-shadow:none }
+    }
+  </style>
+</head>
+<body>
+  <main class="stage">
+    <nav class="map" aria-label="Карта экранов">
+      <strong>Экраны прототипа</strong>
+      <button data-jump="auth"><i>01</i>Авторизация</button>
+      <button class="active" data-demo-home="start"><i>02</i>Главная · начать</button>
+      <button data-demo-picker><i>03</i>Выбор набора</button>
+      <button data-demo-home="active"><i>04</i>Главная · продолжить</button>
+      <button data-jump="routines"><i>05</i>Все наборы</button>
+      <button data-jump="routine"><i>06</i>Набор</button>
+      <button data-jump="edit"><i>07</i>Редактор</button>
+      <button data-jump="exercise"><i>08</i>Упражнение</button>
+      <button data-jump="rest"><i>09</i>Отдых</button>
+      <button data-jump="history"><i>10</i>История</button>
+      <button data-jump="summary"><i>11</i>Результат</button>
+      <button data-jump="profile"><i>12</i>Профиль</button>
+    </nav>
+    <section class="phone" aria-label="FORMA">
+      <div class="status"><span>9:41</span><span>▮▮▮　⌁　▰</span></div>
+      <header class="topbar" id="topbar"></header>
+      <div class="screen" id="screen"></div>
+      <div class="action hidden" id="action"></div>
+      <div class="toast" id="toast" role="status"></div>
+    </section>
+  </main>
+  <div id="modal"></div>
+  <script>
+    (() => {
+      const catalog = [
+        {key:"dips",name:"Отжимания на брусьях",icon:"∏",meta:"4 × 8 повтора",defaultIndex:1,progressions:["С резиной","С весом тела","С дополнительным весом"]},
+        {key:"band",name:"Отжимания с резиной",icon:"⌁",meta:"3 × 12 повтора",defaultIndex:1,progressions:["Лёгкая резина","Средняя резина","Тяжёлая резина"]},
+        {key:"hspu",name:"Отжимания в стойке",icon:"↥",meta:"4 × 5 повтора",defaultIndex:0,progressions:["У стены","На паралетсах","Свободные"]},
+        {key:"diamond",name:"Алмазные отжимания",icon:"◇",meta:"3 × 10 повтора",defaultIndex:1,progressions:["С колен","Классические","С ногами на опоре"]},
+        {key:"muscle",name:"Выход силой",icon:"↟",meta:"5 × 2 повтора",defaultIndex:0,progressions:["С резиной","Негативные","Чистый выход"]},
+        {key:"high",name:"Высокие подтягивания",icon:"↑",meta:"4 × 5 повтора",defaultIndex:0,progressions:["До груди","До солнечного сплетения","До пояса"]},
+        {key:"australian",name:"Австралийские подтягивания",icon:"⌐",meta:"3 × 12 повтора",defaultIndex:1,progressions:["Высокая перекладина","Низкая перекладина","Ноги на опоре"]},
+        {key:"front",name:"Передний вис",icon:"↦",meta:"3 × 10 сек",defaultIndex:0,progressions:["Группировка","Одна нога","Полный вис"]},
+        {key:"handstand",name:"Стойка у стены",icon:"↯",meta:"4 × 30 сек",defaultIndex:1,progressions:["Лицом от стены","Лицом к стене","Без стены"]},
+        {key:"knees",name:"Подъём коленей в висе",icon:"∪",meta:"3 × 12 повтора",defaultIndex:0,progressions:["Согнутые колени","До угла","Прямые ноги"]},
+        {key:"planche",name:"Планш",icon:"⌜",meta:"3 × 10 сек",defaultIndex:1,progressions:["Лин","Группировка","Стреддл"]}
+      ];
+      let routines = [
+        {id:"push",name:"Push day",minutes:35,difficulty:"medium",keys:["dips","band","hspu","diamond","planche"]},
+        {id:"morning",name:"Morning routine",minutes:18,difficulty:"easy",keys:["handstand","knees","australian","diamond","band","front"]},
+        {id:"pull",name:"Pull + core",minutes:28,difficulty:"hard",keys:["muscle","high","front","knees"]}
+      ];
+      const labels = {easy:"Лёгкая",medium:"Средняя",hard:"Высокая"};
+      const state = {
+        screen:"home", selected:"push", returnTo:"home", draft:null, modal:null,
+        catalogSelection:[], workoutKeys:[], exerciseIndex:0, set:1, reps:8, effort:null, seconds:120,
+        progressions:{}, menu:false, activeWorkout:false, activeRoutineId:null, workoutEntry:"home"
+      };
+      const $ = s => document.querySelector(s);
+      const item = key => catalog.find(x => x.key === key);
+      const routine = () => routines.find(x => x.id === state.selected) || routines[0];
+      const countLabel = n => n === 1 ? "1 упражнение" : n > 1 && n < 5 ? `${n} упражнения` : `${n} упражнений`;
+      const difficulty = r => `<i class="difficulty ${r.difficulty}">${labels[r.difficulty]}</i>`;
+      const routineCard = r => `<button class="routine-card" data-open="${r.id}">
+        <span class="routine-icon">${item(r.keys[0])?.icon || "＋"}</span>
+        <span class="routine-copy"><b>${r.name}</b><small>${countLabel(r.keys.length)} · ${r.minutes} мин</small>${difficulty(r)}</span>
+        <span class="arrow">›</span></button>`;
+      let toastTimer;
+      let timer;
+
+      function notify(text) {
+        clearTimeout(toastTimer);
+        $("#toast").textContent = text;
+        $("#toast").classList.add("show");
+        toastTimer = setTimeout(() => $("#toast").classList.remove("show"), 1700);
+      }
+      function header(title, back = false) {
+        $("#topbar").innerHTML = back
+          ? `<button class="icon-btn" data-back aria-label="Назад">←</button><span class="top-title">${title}</span><span style="width:42px"></span>`
+          : `<h1>Тренировки</h1><button class="icon-btn" data-menu aria-label="Меню">•••</button>`;
+      }
+      function setAction(html = "") {
+        $("#action").innerHTML = html;
+        $("#action").classList.toggle("hidden", !html);
+      }
+      function render() {
+        clearInterval(timer);
+        document.querySelectorAll("[data-jump]").forEach(b => b.classList.toggle("active", b.dataset.jump === state.screen));
+        document.querySelectorAll("[data-demo-home]").forEach(b => {
+          const mode = state.activeWorkout ? "active" : "start";
+          b.classList.toggle("active", state.screen === "home" && b.dataset.demoHome === mode);
+        });
+        document.querySelectorAll("[data-demo-picker]").forEach(b => b.classList.toggle("active", state.modal === "workoutPicker"));
+        const views = {
+          auth:renderAuth, home:renderHome, routines:renderRoutines, routine:renderRoutine,
+          edit:renderEdit, exercise:renderExercise, rest:renderRest, history:renderHistory,
+          summary:renderSummary, profile:renderProfile
+        };
+        (views[state.screen] || renderHome)();
+        $("#screen").scrollTop = 0;
+      }
+      function renderAuth() {
+        header("FORMA");
+        setAction("");
+        $("#screen").innerHTML = `<div class="auth">
+          <div class="brand"><i>F</i><span>FORMA</span></div>
+          <div><span class="eyebrow">Тренируйся по форме</span><h1>Начнём с почты</h1>
+          <p>Свои наборы тренировок, прогрессии и история — в одном месте.</p></div>
+          <article class="card auth-card">
+            <label class="field">Почта<input id="demoEmail" type="email" value="demo@forma.app"></label>
+            <button class="primary" data-enter>Войти</button>
+            <button class="secondary" data-enter>Регистрация</button>
+          </article>
+        </div>`;
+      }
+      function renderHome() {
+        header("Тренировки");
+        const active = routines.find(r => r.id === state.activeRoutineId);
+        setAction(`<div class="home-action">
+          ${state.activeWorkout && active ? `<div class="active-workout">
+            <span><small>Сейчас выполняется</small><b>${active.name}</b></span><i>${item(active.keys[0])?.icon || "↗"}</i>
+          </div>` : ""}
+          <button class="primary" ${state.activeWorkout ? "data-resume" : "data-pick-workout"}>
+            ${state.activeWorkout ? "Продолжить тренировку" : "Начать тренировку"}
+          </button>
+        </div>`);
+        $("#screen").innerHTML = `<div class="stack">
+          ${state.menu ? `<article class="card" style="padding:9px;display:grid;grid-template-columns:1fr 1fr;gap:7px">
+            <button class="secondary" data-go="routines">Мои тренировки</button><button class="secondary" data-go="history">История</button>
+            <button class="secondary" data-go="profile" style="grid-column:1/-1">Профиль</button>
+          </article>` : ""}
+          <div class="stats">
+            <article class="card stat"><b>12</b><span>Всего тренировок</span><small><button class="link-btn" data-go="history">История →</button></small></article>
+            <article class="card stat"><b>4</b><span>Тренировок<br>подряд</span><small>Личный рекорд ♨</small></article>
+          </div>
+          <article class="card cycle"><span class="eyebrow">Текущий цикл</span><h2>Тренировка 5 из 12</h2>
+            <div class="track">${Array.from({length:12},(_,i)=>`<i class="${i<4?"done":i===4?"current":""}"></i>`).join("")}</div>
+            <p>Верх тела · силовая</p></article>
+          <article class="card progress"><h2>Прогресс с прошлой тренировки</h2>
+            <div class="progress-row"><span class="exercise-icon">↟</span><span>Выходы силой: с резиной</span><small>5 × 2 → <b>5 × 3</b></small></div>
+            <div class="progress-row"><span class="exercise-icon">↯</span><span>Стойка на руках: у стены</span><small>22 сек → <b>30 сек</b></small></div>
+            <div class="progress-row"><span class="exercise-icon">⌜</span><span>Планш: tuck planche</span><small>8 сек → <b>10 сек</b></small></div>
+          </article>
+        </div>`;
+      }
+      function renderRoutines() {
+        header("Мои тренировки", true);
+        setAction(`<button class="primary" data-create>＋ Новый набор</button>`);
+        $("#screen").innerHTML = `<div class="stack">
+          <div class="page-title"><span class="eyebrow">Конструктор</span><h1>Мои тренировки</h1><p>Собери тренировку под себя</p></div>
+          <div class="routine-list">${routines.map(routineCard).join("")}</div>
+        </div>`;
+      }
+      function renderRoutine() {
+        const r = routine();
+        header(r.name, true);
+        setAction(`<button class="primary" data-start>Начать тренировку</button>`);
+        $("#screen").innerHTML = `<div class="stack">
+          <div class="detail-head"><span class="routine-icon">${item(r.keys[0])?.icon || "＋"}</span>
+            <div><span class="eyebrow">Набор тренировки</span><h1>${r.name}</h1>${difficulty(r)}</div></div>
+          <div class="card meta"><span>${countLabel(r.keys.length)}</span><span>${r.minutes} мин</span></div>
+          <div class="exercise-list">${r.keys.map((key,i)=>{
+            const ex=item(key); const chosen=state.progressions[`${r.id}:${key}`]||ex.progressions[ex.defaultIndex];
+            return `<article class="card exercise-row"><span>${i+1}</span><span class="exercise-icon">${ex.icon}</span>
+              <p><b>${ex.name}</b><small>${ex.meta} · ${chosen}</small></p>
+              <button class="mini-btn" data-progression="${key}">Изменить</button></article>`;
+          }).join("")}</div>
+          <div class="secondary-actions"><button class="secondary" data-edit>Редактировать</button><button class="danger" data-delete>Удалить набор</button></div>
+        </div>`;
+      }
+      function renderEdit() {
+        const d = state.draft || {...routine(),keys:[...routine().keys]};
+        state.draft = d;
+        header(d.id ? "Редактирование" : "Новый набор", true);
+        setAction(`<button class="primary" data-save>Сохранить</button>`);
+        $("#screen").innerHTML = `<div class="stack">
+          <div class="page-title"><span class="eyebrow">${d.id?"Измени детали и состав":"Собери тренировку под себя"}</span><h1>${d.id?"Редактирование":"Новый набор"}</h1></div>
+          <label class="field">Название<input id="draftName" maxlength="80" value="${d.name}"></label>
+          <div class="field-grid"><label class="field">Время, мин<input id="draftMinutes" type="number" min="5" max="240" value="${d.minutes}"></label>
+            <div class="field"><span>Сложность</span><div class="difficulty-pick">${["easy","medium","hard"].map(x=>`<button class="${d.difficulty===x?"active":""}" data-difficulty="${x}">${x==="easy"?"Л":x==="medium"?"С":"В"}</button>`).join("")}</div></div></div>
+          <div class="section-head"><h2>Упражнения</h2><span>${d.keys.length}</span></div>
+          <div class="exercise-list">${d.keys.map((key,i)=>{const ex=item(key);return `<article class="card exercise-row editor-row">
+            <span>⠿</span><span class="exercise-icon">${ex.icon}</span><p><b>${ex.name}</b><small>${ex.meta}</small></p>
+            <span class="order"><button data-move="${i}:-1" ${i===0?"disabled":""}>↑</button><button data-move="${i}:1" ${i===d.keys.length-1?"disabled":""}>↓</button></span>
+            <button class="remove" data-remove="${key}">×</button></article>`}).join("") || `<article class="card" style="padding:24px;text-align:center;color:var(--muted)">Добавь хотя бы одно упражнение</article>`}</div>
+          <button class="new-btn" data-catalog>＋ Добавить упражнение</button>
+          <button class="link-btn" data-cancel>Отмена</button>
+        </div>`;
+      }
+      function renderExercise() {
+        if (!state.workoutKeys.length) state.workoutKeys = [...routine().keys];
+        const ex = item(state.workoutKeys[state.exerciseIndex]) || item(state.workoutKeys[0]);
+        const [sets,target] = ex.meta.match(/\d+/g).map(Number);
+        if (!state.reps) state.reps = target;
+        header(routine().name, true);
+        setAction(`<button class="primary" data-finish>Завершить подход</button>`);
+        $("#screen").innerHTML = `<div class="exercise-stage">
+          <div><span class="eyebrow">Прогрессия</span><h1>${ex.name}:<br><em>${state.progressions[`${routine().id}:${ex.key}`]||ex.progressions[ex.defaultIndex]}</em></h1></div>
+          <article class="card set-card"><span>Подход ${state.set} из ${sets}</span><b>${state.reps}</b><small>${ex.meta.includes("сек")?"сек":"повтора"}</small>
+            <div class="counter"><button data-rep="-1">−</button><span>факт: ${state.reps}</span><button data-rep="1">＋</button></div></article>
+          <article class="card" style="padding:14px;text-align:left"><span class="eyebrow">Дальше</span><b>${state.set<sets?`${ex.name}, подход ${state.set+1}`:(item(state.workoutKeys[state.exerciseIndex+1])?.name||"Завершение тренировки")}</b></article>
+        </div>`;
+      }
+      function renderRest() {
+        header(routine().name, true);
+        setAction(`<button class="primary" data-continue>Начать раньше</button>`);
+        $("#screen").innerHTML = `<div class="stack" style="text-align:center">
+          <div class="page-title"><span class="eyebrow">После подхода ${state.set}</span><h1>Отдых</h1></div>
+          <div class="timer"><b id="clock">02:00</b></div>
+          <article class="card efforts">${[["easy","Легко"],["reserve","С запасом"],["hard","Тяжело"]].map(([v,l])=>`<button class="${state.effort===v?"active":""}" data-effort="${v}">${l}</button>`).join("")}</article>
+          <div class="secondary-actions"><button class="secondary" data-add-time>＋30 сек</button><button class="secondary" data-continue>Пропустить</button></div>
+        </div>`;
+        state.seconds = 120;
+        timer = setInterval(() => {
+          state.seconds = Math.max(0,state.seconds-1);
+          const c=$("#clock"); if(c)c.textContent=`${String(Math.floor(state.seconds/60)).padStart(2,"0")}:${String(state.seconds%60).padStart(2,"0")}`;
+          if(!state.seconds)clearInterval(timer);
+        },1000);
+      }
+      function renderHistory() {
+        header("История", true);
+        setAction("");
+        $("#screen").innerHTML = `<div class="stack">
+          <div class="page-title"><span class="eyebrow">Статистика</span><h1>История</h1><p>Здесь сохраняются завершённые тренировки.</p></div>
+          ${[["Push day","26 июл · 35 мин · 16 подходов"],["Pull + core","24 июл · 28 мин · 15 подходов"],["Morning routine","22 июл · 18 мин · 18 подходов"]].map(x=>`<article class="card history-item"><p><b>${x[0]}</b><small>${x[1]}</small></p><b>✓</b></article>`).join("")}
+        </div>`;
+      }
+      function renderSummary() {
+        header("Готово", true);
+        setAction("");
+        $("#screen").innerHTML = `<div class="success"><div class="success-mark">✓</div>
+          <div class="page-title"><span class="eyebrow">Тренировка завершена</span><h1>Отличная<br>работа</h1><p>${routine().name} · 35 мин</p></div>
+          <div class="stats" style="width:100%"><article class="card stat"><b>16</b><span>подходов</span></article><article class="card stat"><b>13</b><span>всего тренировок</span></article></div>
+          <button class="primary" data-go="home">На главную</button></div>`;
+      }
+      function renderProfile() {
+        header("Профиль", true);
+        setAction("");
+        $("#screen").innerHTML = `<div class="stack">
+          <div class="page-title"><span class="eyebrow">Аккаунт</span><h1>Евгений</h1><p>demo@forma.app</p></div>
+          <article class="card profile-card"><div><span>Дата рождения</span><b>1 января 1990</b></div><div><span>Пол</span><b>Не указан</b></div><div><span>Тренировок</span><b>12</b></div></article>
+          <button class="danger" data-go="auth">Выйти из аккаунта</button>
+        </div>`;
+      }
+      function showModal(type,payload) {
+        state.modal=type;
+        if(type==="workoutPicker") {
+          $("#modal").innerHTML=`<div class="overlay bottom"><section class="sheet">
+            <div class="sheet-handle"></div>
+            <div class="sheet-head"><div><h2>Выбери тренировку</h2><p>Нажми на набор, чтобы сразу начать.</p></div>
+              <button class="sheet-close" data-close-modal aria-label="Закрыть">×</button></div>
+            ${routines.length ? `<div class="picker-list">${routines.map(r=>`<button class="routine-card" data-start-routine="${r.id}">
+              <span class="routine-icon">${item(r.keys[0])?.icon || "＋"}</span>
+              <span class="routine-copy"><b>${r.name}</b><small>${countLabel(r.keys.length)} · ${r.minutes} мин</small>${difficulty(r)}</span>
+              <span class="start-mark">▶</span></button>`).join("")}</div>`
+              : `<div class="empty-picker"><strong>У вас пока нет тренировок</strong><p>Создайте первый набор упражнений, чтобы начать.</p></div>`}
+            <button class="${routines.length ? "secondary" : "primary"}" data-manage-routines>
+              ${routines.length ? "Управлять наборами" : "Создать тренировку"}
+            </button>
+          </section></div>`;
+        }
+        if(type==="catalog") {
+          state.catalogSelection=[];
+          $("#modal").innerHTML=`<div class="overlay"><section class="sheet"><h2>Добавить упражнение</h2>
+            <label class="field">Поиск<input id="catalogSearch" placeholder="Поиск упражнений"></label>
+            <div class="catalog" id="catalogList">${catalog.map(ex=>`<button data-catalog-key="${ex.key}" ${state.draft.keys.includes(ex.key)?"disabled":""}>
+              <span class="exercise-icon">${ex.icon}</span><span><b>${ex.name}</b><br><small>${ex.meta}</small></span><i></i></button>`).join("")}</div>
+            <button class="primary" data-add-selected>Добавить</button><button class="secondary" data-close-modal style="margin-top:8px">Отмена</button>
+          </section></div>`;
+        }
+        if(type==="progression") {
+          const ex=item(payload);
+          $("#modal").innerHTML=`<div class="overlay"><section class="sheet"><span class="eyebrow">Выбери прогрессию</span><h2>${ex.name}</h2>
+            <div class="catalog">${ex.progressions.map(p=>`<button data-pick-progression="${payload}:${p}"><span>○</span><b>${p}</b><i>→</i></button>`).join("")}</div>
+            <button class="secondary" data-close-modal>Отмена</button></section></div>`;
+        }
+        if(type==="delete") {
+          $("#modal").innerHTML=`<div class="overlay"><section class="sheet" style="text-align:center"><h2>Удалить «${routine().name}»?</h2>
+            <p>Завершённые тренировки останутся в истории.</p><button class="danger" data-confirm-delete>Удалить набор</button>
+            <button class="secondary" data-close-modal style="margin-top:8px">Отмена</button></section></div>`;
+        }
+      }
+      function closeModal(){ state.modal=null; $("#modal").innerHTML="" }
+      function go(name) {
+        state.screen=name; state.menu=false;
+        if(name==="routine"&&!routines.find(x=>x.id===state.selected))state.selected=routines[0]?.id;
+        if(name==="edit"&&!state.draft)state.draft={...routine(),keys:[...routine().keys]};
+        render();
+      }
+      document.addEventListener("click", e => {
+        const b=e.target.closest("button"); if(!b)return;
+        if(b.dataset.demoHome) {
+          state.activeWorkout=b.dataset.demoHome==="active";
+          state.activeRoutineId=state.activeWorkout ? "push" : null;
+          state.selected=state.activeRoutineId || state.selected;
+          closeModal();
+          return go("home");
+        }
+        if(b.hasAttribute("data-demo-picker")) {
+          state.activeWorkout=false; state.activeRoutineId=null; go("home"); return showModal("workoutPicker");
+        }
+        if(b.dataset.jump) return go(b.dataset.jump);
+        if(b.dataset.go) return go(b.dataset.go);
+        if(b.hasAttribute("data-enter")) return go("home");
+        if(b.hasAttribute("data-menu")) { state.menu=!state.menu; return render() }
+        if(b.hasAttribute("data-pick-workout")) return showModal("workoutPicker");
+        if(b.hasAttribute("data-manage-routines")) { closeModal(); return go("routines") }
+        if(b.dataset.startRoutine) {
+          state.selected=b.dataset.startRoutine;
+          state.activeRoutineId=b.dataset.startRoutine;
+          state.activeWorkout=true;
+          state.workoutEntry="home";
+          state.returnTo="home";
+          state.workoutKeys=[...routine().keys];
+          state.exerciseIndex=0;
+          state.set=1;
+          const first=item(state.workoutKeys[0]);
+          state.reps=Number(first.meta.match(/\d+/g)[1]);
+          closeModal();
+          return go("exercise");
+        }
+        if(b.hasAttribute("data-resume")) {
+          state.selected=state.activeRoutineId || state.selected;
+          state.workoutEntry="home";
+          return go("exercise");
+        }
+        if(b.hasAttribute("data-back")) {
+          const prev={routines:"home",routine:state.returnTo,edit:"routine",exercise:state.workoutEntry,rest:"exercise",history:"home",summary:"home",profile:"home",auth:"home"};
+          return go(prev[state.screen]||"home");
+        }
+        if(b.dataset.open) { state.selected=b.dataset.open; state.returnTo=state.screen; return go("routine") }
+        if(b.hasAttribute("data-create")) { state.draft={id:null,name:"",minutes:30,difficulty:"medium",keys:[]}; state.returnTo=state.screen; return go("edit") }
+        if(b.hasAttribute("data-edit")) { state.draft={...routine(),keys:[...routine().keys]}; return go("edit") }
+        if(b.hasAttribute("data-cancel")) { state.draft=null; return go(state.selected?"routine":state.returnTo) }
+        if(b.dataset.difficulty) { state.draft.difficulty=b.dataset.difficulty; return render() }
+        if(b.dataset.remove) { state.draft.keys=state.draft.keys.filter(k=>k!==b.dataset.remove); return render() }
+        if(b.dataset.move) {
+          const [i,d]=b.dataset.move.split(":").map(Number),t=i+d;
+          [state.draft.keys[i],state.draft.keys[t]]=[state.draft.keys[t],state.draft.keys[i]]; return render();
+        }
+        if(b.hasAttribute("data-catalog")) return showModal("catalog");
+        if(b.dataset.catalogKey) {
+          const k=b.dataset.catalogKey; state.catalogSelection=state.catalogSelection.includes(k)?state.catalogSelection.filter(x=>x!==k):[...state.catalogSelection,k];
+          b.classList.toggle("selected"); b.querySelector("i").textContent=b.classList.contains("selected")?"✓":""; return;
+        }
+        if(b.hasAttribute("data-add-selected")) {
+          state.draft.keys=[...state.draft.keys,...state.catalogSelection]; closeModal(); return render();
+        }
+        if(b.hasAttribute("data-save")) {
+          state.draft.name=$("#draftName").value.trim(); state.draft.minutes=Number($("#draftMinutes").value);
+          if(!state.draft.name)return notify("Введите название набора");
+          if(!state.draft.keys.length)return notify("Добавьте хотя бы одно упражнение");
+          if(state.draft.id) routines=routines.map(r=>r.id===state.draft.id?{...state.draft}:r);
+          else { state.draft.id=`custom-${Date.now()}`; routines.push({...state.draft}) }
+          state.selected=state.draft.id; state.draft=null; return go("routine");
+        }
+        if(b.dataset.progression) return showModal("progression",b.dataset.progression);
+        if(b.dataset.pickProgression) {
+          const [key,...parts]=b.dataset.pickProgression.split(":"); state.progressions[`${routine().id}:${key}`]=parts.join(":");
+          closeModal(); notify("Прогрессия сохранена"); return render();
+        }
+        if(b.hasAttribute("data-delete")) return showModal("delete");
+        if(b.hasAttribute("data-confirm-delete")) {
+          routines=routines.filter(r=>r.id!==state.selected); state.selected=routines[0]?.id; closeModal(); return go(state.returnTo||"routines");
+        }
+        if(b.hasAttribute("data-close-modal")) return closeModal();
+        if(b.hasAttribute("data-start")) {
+          state.activeWorkout=true; state.activeRoutineId=routine().id;
+          state.workoutEntry="routine";
+          state.workoutKeys=[...routine().keys]; state.exerciseIndex=0; state.set=1;
+          const ex=item(state.workoutKeys[0]); state.reps=Number(ex.meta.match(/\d+/g)[1]); return go("exercise");
+        }
+        if(b.dataset.rep) { state.reps=Math.max(0,state.reps+Number(b.dataset.rep)); return render() }
+        if(b.hasAttribute("data-finish")) { state.effort=null; return go("rest") }
+        if(b.dataset.effort) { state.effort=b.dataset.effort; return render() }
+        if(b.hasAttribute("data-add-time")) { state.seconds+=30; return notify("Добавлено 30 секунд") }
+        if(b.hasAttribute("data-continue")) {
+          const ex=item(state.workoutKeys[state.exerciseIndex]), sets=Number(ex.meta.match(/\d+/)[0]);
+          if(state.set<sets) state.set+=1;
+          else if(state.exerciseIndex<state.workoutKeys.length-1) { state.exerciseIndex+=1; state.set=1 }
+          else { state.activeWorkout=false; state.activeRoutineId=null; return go("summary") }
+          const next=item(state.workoutKeys[state.exerciseIndex]); state.reps=Number(next.meta.match(/\d+/g)[1]); return go("exercise");
+        }
+      });
+      document.addEventListener("input", e => {
+        if(e.target.id==="catalogSearch") {
+          const q=e.target.value.toLowerCase();
+          document.querySelectorAll("[data-catalog-key]").forEach(b=>b.classList.toggle("hidden",!b.textContent.toLowerCase().includes(q)));
+        }
+      });
+      render();
+    })();
+  </script>
+</body>
+</html>

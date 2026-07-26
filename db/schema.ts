@@ -1,4 +1,5 @@
-import { integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
+import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
@@ -62,15 +63,24 @@ export const workoutRoutineExercises = sqliteTable(
   (table) => [primaryKey({ columns: [table.routineId, table.exerciseKey] })],
 );
 
-export const workoutSessions = sqliteTable("workout_sessions", {
-  id: text("id").primaryKey(),
-  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  workoutType: text("workout_type").notNull(),
-  status: text("status").notNull().default("active"),
-  startedAt: integer("started_at").notNull(),
-  completedAt: integer("completed_at"),
-  durationSeconds: integer("duration_seconds"),
-});
+export const workoutSessions = sqliteTable(
+  "workout_sessions",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    workoutType: text("workout_type").notNull(),
+    status: text("status").notNull().default("active"),
+    startedAt: integer("started_at").notNull(),
+    completedAt: integer("completed_at"),
+    durationSeconds: integer("duration_seconds"),
+  },
+  (table) => [
+    index("workout_sessions_user_status_idx").on(table.userId, table.status),
+    uniqueIndex("workout_sessions_one_active_user_idx")
+      .on(table.userId)
+      .where(sql`${table.status} = 'active'`),
+  ],
+);
 
 export const workoutSessionSnapshots = sqliteTable("workout_session_snapshots", {
   workoutSessionId: text("workout_session_id").primaryKey().references(() => workoutSessions.id, { onDelete: "cascade" }),
