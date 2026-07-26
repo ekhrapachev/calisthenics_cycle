@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#e7eae2">
+  <title>FORMA — завершение тренировки без сохранения</title>
+  <style>
+    :root {
+      --ink:#151714;
+      --muted:#747a70;
+      --paper:#f5f7ef;
+      --card:#fff;
+      --line:#dfe3d8;
+      --lime:#b5ff00;
+      --danger:#c83d32;
+      --danger-soft:#fff1ef;
+      --shadow:0 28px 80px rgba(44,49,40,.16);
+    }
+    * { box-sizing:border-box }
+    html,body { min-height:100%; margin:0 }
+    body {
+      color:var(--ink);
+      background:
+        radial-gradient(circle at 80% 8%,rgba(181,255,0,.22),transparent 30rem),
+        #e7eae2;
+      font:14px/1.4 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    }
+    button { color:inherit; font:inherit; cursor:pointer }
+    button:focus-visible { outline:3px solid rgba(143,220,0,.45); outline-offset:2px }
+    .board { min-height:100dvh; padding:32px; display:grid; place-content:center; gap:24px }
+    .board-head { max-width:1230px }
+    .board-head span {
+      display:block; margin-bottom:5px; color:#697064; font-size:11px;
+      font-weight:850; letter-spacing:.13em; text-transform:uppercase;
+    }
+    .board-head h1 { margin:0; font-size:28px; line-height:1.05; letter-spacing:-.04em }
+    .board-head p { margin:8px 0 0; color:var(--muted) }
+    .screens { display:grid; grid-template-columns:repeat(3,390px); gap:30px }
+    .screen-case { display:grid; gap:10px }
+    .case-label { display:flex; align-items:end; justify-content:space-between; padding:0 4px }
+    .case-label strong { font-size:13px }
+    .case-label span { color:var(--muted); font-size:11px }
+    .phone {
+      position:relative; width:390px; height:760px; display:flex; flex-direction:column;
+      overflow:hidden; border:1px solid #d2d6cd; border-radius:32px;
+      background:var(--paper); box-shadow:var(--shadow);
+    }
+    .status {
+      height:28px; padding:9px 21px 0; display:flex; justify-content:space-between;
+      font-size:10px; font-weight:850;
+    }
+    .topbar {
+      min-height:61px; padding:9px 17px 10px; display:flex; align-items:center;
+      justify-content:space-between;
+    }
+    .topbar h2 { margin:0; font-size:29px; line-height:1; letter-spacing:-.05em }
+    .icon-btn {
+      width:40px; height:40px; display:grid; place-items:center; border:1px solid var(--line);
+      border-radius:14px; background:rgba(255,255,255,.8); font-size:18px;
+    }
+    .content { flex:1; min-height:0; padding:0 17px 18px; overflow:hidden }
+    .stack { display:grid; gap:10px }
+    .card {
+      border:1px solid rgba(218,222,213,.95); border-radius:20px;
+      background:rgba(255,255,255,.94);
+    }
+    .stats { display:grid; grid-template-columns:1fr 1fr; gap:9px }
+    .stat { min-height:116px; padding:16px 14px; display:flex; flex-direction:column }
+    .stat b { font-size:36px; line-height:1; letter-spacing:-.05em }
+    .stat span { margin-top:9px; color:var(--muted) }
+    .stat small { margin-top:auto; font-size:11px; font-weight:800 }
+    .cycle,.progress { padding:13px 14px }
+    .eyebrow {
+      display:block; margin:0 0 4px; color:#697064; font-size:10px;
+      font-weight:850; letter-spacing:.12em; text-transform:uppercase;
+    }
+    .cycle h3 { margin:2px 0 9px; font-size:18px }
+    .track { display:grid; grid-template-columns:repeat(12,1fr); align-items:center; gap:3px }
+    .track i { height:7px; border-radius:8px; background:#e2e5df }
+    .track i.done { background:#aaf000 }
+    .track i.current {
+      height:15px; border:3px solid #92df00; border-radius:50%; background:#fff;
+    }
+    .cycle p { margin:8px 0 0; color:var(--muted); font-size:11px }
+    .progress h3 { margin:0 0 6px; font-size:13px; font-weight:650 }
+    .progress-row {
+      min-height:37px; display:grid; grid-template-columns:27px minmax(0,1fr) auto;
+      align-items:center; gap:7px; border-top:1px solid #edf0ea; font-size:11px;
+    }
+    .progress-row:first-of-type { border-top:0 }
+    .exercise-icon {
+      width:27px; height:27px; display:grid; place-items:center; border:1px solid #e0e5d7;
+      border-radius:9px; background:linear-gradient(145deg,#f9fbf4,#f1f4ea); font-weight:900;
+    }
+    .progress-row span:nth-child(2) { overflow:hidden; white-space:nowrap; text-overflow:ellipsis }
+    .progress-row small { white-space:nowrap; color:var(--muted); font-size:10px }
+    .action {
+      flex:0 0 auto; padding:10px 17px 14px; display:grid; gap:9px;
+      border-top:1px solid var(--line); background:rgba(250,251,247,.95);
+      backdrop-filter:blur(18px);
+    }
+    .active-workout {
+      padding:0 2px; display:flex; align-items:center; justify-content:space-between; gap:12px;
+    }
+    .active-workout span { min-width:0; display:grid; gap:1px }
+    .active-workout small { color:var(--muted); font-size:10px }
+    .active-workout b { overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+    .active-workout i {
+      width:31px; height:31px; display:grid; place-items:center; border-radius:10px;
+      background:var(--lime); font-style:normal; font-weight:900;
+    }
+    .active-card {
+      width:100%; padding:12px; display:grid; grid-template-columns:minmax(0,1fr) auto;
+      gap:8px 12px; border:1px solid var(--line); border-radius:16px;
+      background:#fff; text-align:left;
+    }
+    .active-card .copy { min-width:0; display:grid; gap:2px }
+    .active-card .copy small { color:var(--muted); font-size:10px }
+    .active-card .copy strong {
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:15px;
+    }
+    .active-card .resume { color:#4f554d; font-size:11px; line-height:1.35 }
+    .chevron {
+      grid-column:2; grid-row:1; align-self:center; color:#343934;
+      font-size:36px; line-height:1; font-weight:420;
+    }
+    .primary,.discard,.safe {
+      width:100%; min-height:52px; border-radius:16px; font-weight:850;
+    }
+    .primary { border:0; background:var(--lime) }
+    .discard-link {
+      min-height:30px; border:0; background:transparent; color:var(--danger);
+      font-size:12px; font-weight:800;
+    }
+    .discard {
+      border:1px solid #b9342a; color:#fff; background:var(--danger);
+    }
+    .safe { border:1px solid var(--line); background:#fff }
+    .backdrop {
+      position:absolute; z-index:5; inset:0; display:flex; align-items:flex-end;
+      background:rgba(20,23,18,.5); backdrop-filter:blur(3px);
+    }
+    .sheet {
+      width:100%; padding:11px 17px 19px; border-radius:25px 25px 0 0;
+      background:var(--paper); box-shadow:0 -20px 60px rgba(26,29,24,.2);
+    }
+    .handle {
+      width:42px; height:4px; margin:0 auto 18px; border-radius:8px; background:#c7ccc1;
+    }
+    .warning {
+      width:44px; height:44px; margin-bottom:14px; display:grid; place-items:center;
+      border-radius:14px; color:var(--danger); background:var(--danger-soft);
+      font-size:21px; font-weight:900;
+    }
+    .sheet h3 { margin:0; font-size:25px; line-height:1.08; letter-spacing:-.04em }
+    .sheet p { margin:10px 0 18px; color:#62685f; line-height:1.5 }
+    .sheet-actions { display:grid; gap:8px }
+    .workout-list { margin:0 0 15px; display:grid; gap:7px }
+    .workout-row {
+      min-height:60px; padding:8px 10px; display:grid;
+      grid-template-columns:27px minmax(0,1fr); align-items:center; gap:9px;
+      border:1px solid var(--line); border-radius:14px; background:#fff;
+    }
+    .workout-row.current { border-color:#92df00; background:#f5ffe2 }
+    .row-mark {
+      width:27px; height:27px; display:grid; place-items:center; border-radius:9px;
+      color:#596057; background:#eef1e9; font-size:11px; font-weight:850;
+    }
+    .current .row-mark { color:#233000; background:var(--lime) }
+    .completed .row-mark { color:#fff; background:#697064 }
+    .workout-row span:last-child { min-width:0; display:grid; gap:2px }
+    .workout-row b { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px }
+    .workout-row small { color:var(--muted); font-size:10px }
+    .current small { color:#4d6500; font-weight:750 }
+    .sheet-eyebrow { color:#697064; font-size:10px; font-weight:850; letter-spacing:.12em; text-transform:uppercase }
+    .sheet-summary { margin:4px 0 14px!important; font-size:12px }
+    .annotation {
+      margin-top:2px; padding:10px 12px; border-left:3px solid var(--lime);
+      color:#5d625a; background:rgba(255,255,255,.55); font-size:11px;
+    }
+    @media (max-width:860px) {
+      .board { padding:20px 14px; place-content:start center }
+      .screens { grid-template-columns:1fr }
+      .screen-case { width:min(100%,390px) }
+      .phone { width:100% }
+    }
+  </style>
+</head>
+<body>
+  <main class="board">
+    <header class="board-head">
+      <span>Feature · discard_active_workout</span>
+      <h1>Завершение тренировки без сохранения</h1>
+      <p>Показаны только изменённые состояния главной страницы и зависимого bottom sheet.</p>
+    </header>
+
+    <section class="screens" aria-label="Изменённые состояния">
+      <article class="screen-case">
+        <div class="case-label"><strong>1. Новое действие</strong><span>Главная · active session</span></div>
+        <div class="phone">
+          <div class="status"><span>9:41</span><span>▮▮▮　⌁　▰</span></div>
+          <header class="topbar"><h2>Тренировки</h2><button class="icon-btn" aria-label="Меню">•••</button></header>
+          <div class="content">
+            <div class="stack">
+              <div class="stats">
+                <article class="card stat"><b>12</b><span>Всего тренировок</span><small>История →</small></article>
+                <article class="card stat"><b>4</b><span>Тренировок<br>подряд</span><small>Личный рекорд ♨</small></article>
+              </div>
+              <article class="card cycle">
+                <span class="eyebrow">Текущий цикл</span><h3>Тренировка 5 из 12</h3>
+                <div class="track"><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="current"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                <p>Верх тела · силовая</p>
+              </article>
+              <article class="card progress">
+                <h3>Прогресс с прошлой тренировки</h3>
+                <div class="progress-row"><span class="exercise-icon">↟</span><span>Выходы силой: с резиной</span><small>5 × 2 → <b>5 × 3</b></small></div>
+                <div class="progress-row"><span class="exercise-icon">↯</span><span>Стойка на руках: у стены</span><small>22 сек → <b>30 сек</b></small></div>
+                <div class="progress-row"><span class="exercise-icon">⌜</span><span>Планш: tuck planche</span><small>8 сек → <b>10 сек</b></small></div>
+              </article>
+            </div>
+          </div>
+          <footer class="action">
+            <button class="active-card" data-open-details aria-label="Посмотреть состав активной тренировки Push day">
+              <span class="copy">
+                <small>Сейчас выполняется</small>
+                <strong>Push day</strong>
+                <span class="resume">Продолжим: брусья · подход 3 из 4</span>
+              </span>
+              <span class="chevron" aria-hidden="true">›</span>
+            </button>
+            <button class="primary">Продолжить тренировку</button>
+            <button class="discard-link" data-open-confirm>Завершить без сохранения</button>
+          </footer>
+        </div>
+        <div class="annotation">Название, состав и точка продолжения доступны до перехода в тренировку.</div>
+      </article>
+
+      <article class="screen-case">
+        <div class="case-label"><strong>2. Состав и точка продолжения</strong><span>Bottom sheet</span></div>
+        <div class="phone">
+          <div class="status"><span>9:41</span><span>▮▮▮　⌁　▰</span></div>
+          <header class="topbar"><h2>Тренировки</h2><button class="icon-btn" aria-label="Меню">•••</button></header>
+          <div class="content">
+            <div class="stack">
+              <div class="stats">
+                <article class="card stat"><b>12</b><span>Всего тренировок</span><small>История →</small></article>
+                <article class="card stat"><b>4</b><span>Тренировок<br>подряд</span><small>Личный рекорд ♨</small></article>
+              </div>
+              <article class="card cycle">
+                <span class="eyebrow">Текущий цикл</span><h3>Тренировка 5 из 12</h3>
+                <div class="track"><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="current"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                <p>Верх тела · силовая</p>
+              </article>
+              <article class="card progress">
+                <h3>Прогресс с прошлой тренировки</h3>
+                <div class="progress-row"><span class="exercise-icon">↟</span><span>Выходы силой: с резиной</span><small>5 × 2 → <b>5 × 3</b></small></div>
+                <div class="progress-row"><span class="exercise-icon">↯</span><span>Стойка на руках: у стены</span><small>22 сек → <b>30 сек</b></small></div>
+              </article>
+            </div>
+          </div>
+          <footer class="action"><button class="primary">Продолжить тренировку</button></footer>
+          <div class="backdrop">
+            <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="details-title">
+              <div class="handle"></div>
+              <span class="sheet-eyebrow">Активная тренировка</span>
+              <h3 id="details-title">Push day</h3>
+              <p class="sheet-summary">Выполнено 2 из 5 упражнений</p>
+              <div class="workout-list">
+                <div class="workout-row completed"><span class="row-mark">✓</span><span><b>Отжимания с резиной</b><small>Выполнено</small></span></div>
+                <div class="workout-row completed"><span class="row-mark">✓</span><span><b>Алмазные отжимания</b><small>Выполнено</small></span></div>
+                <div class="workout-row current"><span class="row-mark">3</span><span><b>Отжимания на брусьях</b><small>Продолжим отсюда · подход 3 из 4</small></span></div>
+                <div class="workout-row"><span class="row-mark">4</span><span><b>Отжимания в стойке</b><small>4 × 5 повторов</small></span></div>
+                <div class="workout-row"><span class="row-mark">5</span><span><b>Планш</b><small>3 × 10 сек</small></span></div>
+              </div>
+              <div class="sheet-actions">
+                <button class="primary">Продолжить: подход 3</button>
+                <button class="discard-link" data-details-discard>Завершить без сохранения</button>
+                <button class="safe" data-close-details>Закрыть</button>
+              </div>
+            </section>
+          </div>
+        </div>
+        <div class="annotation">Строки показывают статус, но не позволяют перескочить к будущему упражнению.</div>
+      </article>
+
+      <article class="screen-case">
+        <div class="case-label"><strong>3. Подтверждение отказа</strong><span>Bottom sheet</span></div>
+        <div class="phone">
+          <div class="status"><span>9:41</span><span>▮▮▮　⌁　▰</span></div>
+          <header class="topbar"><h2>Тренировки</h2><button class="icon-btn" aria-label="Меню">•••</button></header>
+          <div class="content">
+            <div class="stack">
+              <div class="stats">
+                <article class="card stat"><b>12</b><span>Всего тренировок</span><small>История →</small></article>
+                <article class="card stat"><b>4</b><span>Тренировок<br>подряд</span><small>Личный рекорд ♨</small></article>
+              </div>
+              <article class="card cycle">
+                <span class="eyebrow">Текущий цикл</span><h3>Тренировка 5 из 12</h3>
+                <div class="track"><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="current"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                <p>Верх тела · силовая</p>
+              </article>
+            </div>
+          </div>
+          <footer class="action"><button class="primary">Продолжить тренировку</button></footer>
+          <div class="backdrop">
+            <section class="sheet" role="alertdialog" aria-modal="true" aria-labelledby="dialog-title" aria-describedby="dialog-copy">
+              <div class="handle"></div>
+              <div class="warning" aria-hidden="true">!</div>
+              <h3 id="dialog-title">Завершить тренировку?</h3>
+              <p id="dialog-copy">Текущий прогресс не сохранится в истории и статистике. Это действие нельзя отменить.</p>
+              <div class="sheet-actions">
+                <button class="discard" data-discard>Завершить без сохранения</button>
+                <button class="safe" data-close-confirm>Продолжить тренировку</button>
+              </div>
+            </section>
+          </div>
+        </div>
+        <div class="annotation">Отказ остаётся отдельным необратимым действием с явным подтверждением.</div>
+      </article>
+    </section>
+  </main>
+  <script>
+    const cases = document.querySelectorAll(".screen-case");
+    document.querySelector("[data-open-details]")?.addEventListener("click", () => {
+      cases[1]?.scrollIntoView({behavior:"smooth",block:"center"});
+    });
+    document.querySelector("[data-close-details]")?.addEventListener("click", () => {
+      cases[0]?.scrollIntoView({behavior:"smooth",block:"center"});
+    });
+    document.querySelector("[data-open-confirm]")?.addEventListener("click", () => {
+      cases[2]?.scrollIntoView({behavior:"smooth",block:"center"});
+    });
+    document.querySelector("[data-details-discard]")?.addEventListener("click", () => {
+      cases[2]?.scrollIntoView({behavior:"smooth",block:"center"});
+    });
+    document.querySelector("[data-close-confirm]")?.addEventListener("click", () => {
+      cases[0]?.scrollIntoView({behavior:"smooth",block:"center"});
+    });
+    document.querySelector("[data-discard]")?.addEventListener("click", event => {
+      const button = event.currentTarget;
+      button.textContent = "Завершаем…";
+      button.disabled = true;
+      setTimeout(() => {
+        button.textContent = "Завершить без сохранения";
+        button.disabled = false;
+      }, 900);
+    });
+  </script>
+</body>
+</html>

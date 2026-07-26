@@ -72,5 +72,5 @@ flowchart TD
 
 - Требования: [business-requirements.md](specs/business-requirements.md)
 - Все сценарии и ошибки: [user-scenarios.md](specs/user-scenarios.md)
-- Feature-пакет: [главная — быстрый запуск](../features/main_page/README.md)
+- Feature-пакет: [главная — быстрый запуск](../features/main_page/quick_start_workout/README.md)
 - Интерфейс: [актуальный прототип](prototypes/current.html)

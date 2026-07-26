@@ -3,7 +3,7 @@
 Основной эталонный прототип локально реализованной версии:
 
 - [Кликабельный HTML-прототип](current.html)
-- [Feature-пакет новой главной](../../features/main_page/README.md)
+- [Feature-пакет быстрого запуска](../../features/main_page/quick_start_workout/README.md)
 - [Предыдущий статичный референс главной](../mockups/current/home.png)
 
 HTML-прототип открывается напрямую и покрывает:
@@ -26,10 +26,10 @@ HTML-прототип открывается напрямую и покрыва�
 
 Числовые значения статистики, прогресса и цикла иллюстративны. Технические
 состояния загрузки, ошибок и конкурентных запросов полностью определены
-[требованиями feature-пакета](../../features/main_page/requirements.md) и
+[требованиями feature-пакета](../../features/main_page/quick_start_workout/requirements.md) и
 реализованы в приложении; прототип служит визуальным и навигационным референсом.
 
 Предыдущая версия до редизайна остаётся в
-[`docs/features/main_page/current/prototype.html`](../../features/main_page/current/prototype.html).
+[`docs/features/main_page/quick_start_workout/current/prototype.html`](../../features/main_page/quick_start_workout/current/prototype.html).
 Исходный ранний PUSH/PULL-прототип сохранён в
 [legacy-push-pull.html](legacy-push-pull.html).

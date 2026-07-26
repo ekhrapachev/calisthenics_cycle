@@ -16,7 +16,7 @@
 - [Статичный референс главной](mockups/current/home.png)
 - [Бизнес-требования](specs/business-requirements.md)
 - [Пользовательские сценарии](specs/user-scenarios.md)
-- [Feature-пакет новой главной](../features/main_page/README.md)
+- [Feature-пакет быстрого запуска](../features/main_page/quick_start_workout/README.md)
 
 ## Последняя подтверждённая production-версия
 

@@ -3,6 +3,8 @@ export type ResumePosition = {
   setNumber: number;
 };
 
+export type WorkoutExerciseState = "completed" | "current" | "upcoming";
+
 type SnapshotExercise = {
   key: string;
   sets: number;
@@ -31,3 +33,17 @@ export function findResumePosition(
 
   return null;
 }
+
+export function getWorkoutExerciseStates(
+  exerciseCount: number,
+  resume: ResumePosition | null,
+): WorkoutExerciseState[] {
+  return Array.from({ length: exerciseCount }, (_, exerciseIndex) => {
+    if (!resume || exerciseIndex < resume.exerciseIndex) return "completed";
+    if (exerciseIndex === resume.exerciseIndex) return "current";
+    return "upcoming";
+  });
+}
+
+export const DISCARD_ACTIVE_WORKOUT_SQL =
+  "DELETE FROM workout_sessions WHERE id = ?1 AND user_id = ?2 AND status = 'active'";

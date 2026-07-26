@@ -10,7 +10,7 @@
 
 - [бизнес-требования](business-requirements.md);
 - [пользовательские сценарии](user-scenarios.md);
-- [feature-пакет новой главной](../../features/main_page/README.md);
+- [feature-пакет быстрого запуска](../../features/main_page/quick_start_workout/README.md);
 - [основной кликабельный прототип](../prototypes/current.html).
 
 Сохраняющиеся решения этой итерации:
@@ -29,4 +29,4 @@
 - активная session продолжается с закреплённого CTA за одно нажатие.
 
 Исторические визуальные материалы сохранены в `docs/product/mockups/current/` и
-`docs/features/main_page/current/` только для сравнения.
+`docs/features/main_page/quick_start_workout/current/` только для сравнения.

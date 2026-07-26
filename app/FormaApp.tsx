@@ -7,6 +7,7 @@ import {
   type Exercise,
   type ExerciseCategory,
 } from "@/lib/workout-catalog";
+import { getWorkoutExerciseStates } from "@/lib/workouts";
 
 type User = {
   id: string;
@@ -106,10 +107,43 @@ const exerciseCountLabel = (count: number) => {
   return `${count} упражнений`;
 };
 
+const focusableElements = (container: HTMLElement) =>
+  Array.from(
+    container.querySelectorAll<HTMLElement>(
+      "button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])",
+    ),
+  );
+
+const trapDialogFocus = (event: KeyboardEvent, container: HTMLElement | null) => {
+  if (event.key !== "Tab" || !container) return;
+  const focusable = focusableElements(container);
+  if (focusable.length === 0) {
+    event.preventDefault();
+    container.focus();
+    return;
+  }
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+};
+
 export default function FormaApp() {
   const screenContentRef = useRef<HTMLDivElement>(null);
   const workoutPickerRef = useRef<HTMLElement>(null);
   const workoutPickerTriggerRef = useRef<HTMLButtonElement>(null);
+  const activeWorkoutCardRef = useRef<HTMLButtonElement>(null);
+  const activeWorkoutDetailsRef = useRef<HTMLElement>(null);
+  const activeWorkoutDetailsTitleRef = useRef<HTMLHeadingElement>(null);
+  const discardDialogRef = useRef<HTMLElement>(null);
+  const discardSafeActionRef = useRef<HTMLButtonElement>(null);
+  const overlayDragStartRef = useRef<number | null>(null);
+  const overlayHistoryDepthRef = useRef(0);
   const [user, setUser] = useState<User | null>(null);
   const [authScreen, setAuthScreen] = useState<AuthScreen>("email");
   const [screen, setScreen] = useState<Screen>("home");
@@ -146,6 +180,12 @@ export default function FormaApp() {
   const [activeRoutineName, setActiveRoutineName] = useState("");
   const [activeExercises, setActiveExercises] = useState<Exercise[]>([]);
   const [activeResume, setActiveResume] = useState<ResumePosition | null>(null);
+  const [activeWorkoutDetailsOpen, setActiveWorkoutDetailsOpen] = useState(false);
+  const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
+  const [discardingWorkout, setDiscardingWorkout] = useState(false);
+  const [discardWorkoutError, setDiscardWorkoutError] = useState("");
+  const [discardWorkoutId, setDiscardWorkoutId] = useState<string | null>(null);
+  const [discardReturnToDetails, setDiscardReturnToDetails] = useState(false);
   const [workoutEntry, setWorkoutEntry] = useState<"home" | "routine">("home");
   const [exerciseIndex, setExerciseIndex] = useState(0);
   const [setNumber, setSetNumber] = useState(1);
@@ -167,6 +207,53 @@ export default function FormaApp() {
     const query = catalogSearch.trim().toLocaleLowerCase("ru-RU");
     return matchesCategory && (!query || `${exercise.name} ${exercise.muscles}`.toLocaleLowerCase("ru-RU").includes(query));
   });
+  const activeExerciseStates = getWorkoutExerciseStates(activeExercises.length, activeResume);
+  const completedExerciseCount = activeExerciseStates.filter((state) => state === "completed").length;
+  const resumeExercise = activeResume ? activeExercises[activeResume.exerciseIndex] : null;
+
+  const openActiveWorkoutDetails = () => {
+    if (!activeWorkoutId || activeWorkoutDetailsOpen || discardDialogOpen) return;
+    window.history.pushState({ formaOverlay: "active-workout-details" }, "");
+    overlayHistoryDepthRef.current = 1;
+    setActiveWorkoutDetailsOpen(true);
+  };
+
+  const closeActiveWorkoutDetails = useCallback(() => {
+    if (window.history.state?.formaOverlay === "active-workout-details") {
+      window.history.back();
+      return;
+    }
+    overlayHistoryDepthRef.current = 0;
+    setActiveWorkoutDetailsOpen(false);
+    window.requestAnimationFrame(() => activeWorkoutCardRef.current?.focus());
+  }, []);
+
+  const openDiscardDialog = (returnToDetails: boolean) => {
+    if (!activeWorkoutId || discardingWorkout || discardDialogOpen) return;
+    setDiscardWorkoutId(activeWorkoutId);
+    setDiscardWorkoutError("");
+    setDiscardReturnToDetails(returnToDetails);
+    setActiveWorkoutDetailsOpen(false);
+    window.history.pushState({ formaOverlay: "discard-active-workout" }, "");
+    overlayHistoryDepthRef.current = returnToDetails ? 2 : 1;
+    setDiscardDialogOpen(true);
+  };
+
+  const closeDiscardDialog = useCallback(() => {
+    if (discardingWorkout) return;
+    if (window.history.state?.formaOverlay === "discard-active-workout") {
+      window.history.back();
+      return;
+    }
+    setDiscardDialogOpen(false);
+    setDiscardWorkoutError("");
+    if (discardReturnToDetails && activeWorkoutId) {
+      setActiveWorkoutDetailsOpen(true);
+    } else {
+      overlayHistoryDepthRef.current = 0;
+      window.requestAnimationFrame(() => activeWorkoutCardRef.current?.focus());
+    }
+  }, [activeWorkoutId, discardReturnToDetails, discardingWorkout]);
 
   useEffect(() => {
     api<{ user: User }>("/api/auth/me")
@@ -175,10 +262,12 @@ export default function FormaApp() {
       .finally(() => setLoading(false));
   }, []);
 
-  const loadHomeData = useCallback(async () => {
+  const loadHomeData = useCallback(async (showLoading = true) => {
     if (!user) return;
-    setHomeStatus("loading");
-    setHomeError("");
+    if (showLoading) {
+      setHomeStatus("loading");
+      setHomeError("");
+    }
     try {
       const [routineData, progressionData, workoutData] = await Promise.all([
       api<{ routines: Routine[] }>("/api/routines"),
@@ -199,8 +288,22 @@ export default function FormaApp() {
       setActiveRoutineName(workoutData.active?.routineName ?? "");
       setActiveExercises(workoutData.active?.exercises ?? []);
       setActiveResume(workoutData.active?.resume ?? null);
+      if (!workoutData.active) {
+        const historyDepth = overlayHistoryDepthRef.current;
+        overlayHistoryDepthRef.current = 0;
+        setActiveWorkoutDetailsOpen(false);
+        setDiscardDialogOpen(false);
+        setDiscardWorkoutId(null);
+        setDiscardWorkoutError("");
+        setDiscardingWorkout(false);
+        if (historyDepth > 0) {
+          window.setTimeout(() => window.history.go(-historyDepth), 0);
+          window.requestAnimationFrame(() => workoutPickerTriggerRef.current?.focus());
+        }
+      }
       setHomeStatus("ready");
     } catch (reason) {
+      if (!showLoading) return;
       const message = reason instanceof Error ? reason.message : "Не удалось загрузить главную";
       setHomeError(message);
       setHomeStatus("error");
@@ -213,6 +316,19 @@ export default function FormaApp() {
   }, [loadHomeData]);
 
   useEffect(() => {
+    if (!user || screen !== "home") return;
+    const syncHome = () => {
+      if (document.visibilityState === "visible") void loadHomeData(false);
+    };
+    window.addEventListener("focus", syncHome);
+    document.addEventListener("visibilitychange", syncHome);
+    return () => {
+      window.removeEventListener("focus", syncHome);
+      document.removeEventListener("visibilitychange", syncHome);
+    };
+  }, [loadHomeData, screen, user]);
+
+  useEffect(() => {
     if (!workoutPickerOpen) return;
     workoutPickerRef.current?.focus();
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -222,26 +338,75 @@ export default function FormaApp() {
         window.requestAnimationFrame(() => workoutPickerTriggerRef.current?.focus());
         return;
       }
-      if (event.key !== "Tab" || !workoutPickerRef.current) return;
-      const focusable = Array.from(
-        workoutPickerRef.current.querySelectorAll<HTMLElement>(
-          "button:not([disabled]), [href], input:not([disabled]), [tabindex]:not([tabindex='-1'])",
-        ),
-      );
-      if (focusable.length === 0) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
+      trapDialogFocus(event, workoutPickerRef.current);
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [workoutPickerOpen]);
+
+  useEffect(() => {
+    if (!activeWorkoutDetailsOpen) return;
+    activeWorkoutDetailsTitleRef.current?.focus();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeActiveWorkoutDetails();
+        return;
+      }
+      trapDialogFocus(event, activeWorkoutDetailsRef.current);
+    };
+    const handleBack = () => {
+      overlayHistoryDepthRef.current = 0;
+      setActiveWorkoutDetailsOpen(false);
+      window.requestAnimationFrame(() => activeWorkoutCardRef.current?.focus());
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("popstate", handleBack);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("popstate", handleBack);
+    };
+  }, [activeWorkoutDetailsOpen, closeActiveWorkoutDetails]);
+
+  useEffect(() => {
+    if (!discardDialogOpen) return;
+    discardSafeActionRef.current?.focus();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !discardingWorkout) {
+        event.preventDefault();
+        closeDiscardDialog();
+        return;
+      }
+      trapDialogFocus(event, discardDialogRef.current);
+    };
+    const handleBack = () => {
+      if (discardingWorkout) {
+        window.history.forward();
+        return;
+      }
+      setDiscardDialogOpen(false);
+      setDiscardWorkoutError("");
+      if (discardReturnToDetails && activeWorkoutId) {
+        overlayHistoryDepthRef.current = 1;
+        setActiveWorkoutDetailsOpen(true);
+      } else {
+        overlayHistoryDepthRef.current = 0;
+        window.requestAnimationFrame(() => activeWorkoutCardRef.current?.focus());
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("popstate", handleBack);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("popstate", handleBack);
+    };
+  }, [
+    activeWorkoutId,
+    closeDiscardDialog,
+    discardDialogOpen,
+    discardReturnToDetails,
+    discardingWorkout,
+  ]);
 
   useEffect(() => {
     if (screen !== "rest" || restSeconds <= 0) return;
@@ -512,6 +677,53 @@ export default function FormaApp() {
     }
   };
 
+  const discardActiveWorkout = async () => {
+    const workoutId = discardWorkoutId;
+    if (!workoutId || discardingWorkout) return;
+    setDiscardingWorkout(true);
+    setDiscardWorkoutError("");
+    try {
+      await api<{ ok: true; workoutId: string }>(`/api/workouts/${workoutId}/discard`, {
+        method: "POST",
+      });
+      setActiveWorkoutId(null);
+      setActiveRoutineName("");
+      setActiveExercises([]);
+      setActiveResume(null);
+      setActiveWorkoutDetailsOpen(false);
+      setDiscardDialogOpen(false);
+      setDiscardWorkoutId(null);
+      setScreen("home");
+      setNotice("Тренировка завершена без сохранения");
+      setHomeStatus("ready");
+      setDiscardingWorkout(false);
+      const historySteps = overlayHistoryDepthRef.current;
+      overlayHistoryDepthRef.current = 0;
+      window.setTimeout(() => {
+        if (window.history.state?.formaOverlay && historySteps > 0) {
+          window.history.go(-historySteps);
+        }
+      }, 0);
+      await loadHomeData(false);
+      window.requestAnimationFrame(() => workoutPickerTriggerRef.current?.focus());
+    } catch {
+      setDiscardWorkoutError(
+        "Не удалось завершить тренировку. Проверьте соединение и попробуйте снова.",
+      );
+      setDiscardingWorkout(false);
+    }
+  };
+
+  const startOverlayDrag = (event: React.PointerEvent) => {
+    overlayDragStartRef.current = event.clientY;
+  };
+
+  const finishOverlayDrag = (event: React.PointerEvent, close: () => void) => {
+    const start = overlayDragStartRef.current;
+    overlayDragStartRef.current = null;
+    if (start !== null && event.clientY - start >= 60) close();
+  };
+
   const finishSet = async () => {
     if (!activeWorkoutId || !currentExercise) return;
     setBusy(true);
@@ -606,6 +818,12 @@ export default function FormaApp() {
     setActiveExercises([]);
     setActiveRoutineName("");
     setActiveResume(null);
+    setActiveWorkoutDetailsOpen(false);
+    setDiscardDialogOpen(false);
+    setDiscardWorkoutId(null);
+    setDiscardWorkoutError("");
+    setDiscardingWorkout(false);
+    setNotice("");
     setHomeStatus("loading");
   };
 
@@ -1050,6 +1268,11 @@ export default function FormaApp() {
             </div>
           )}
           {error && user && <button className="toast" onClick={() => setError("")}>{error} ×</button>}
+          {notice && user && (
+            <button className="toast success-toast" onClick={() => setNotice("")} role="status">
+              {notice} ×
+            </button>
+          )}
         </div>
 
         {screen === "home" && (
@@ -1060,18 +1283,36 @@ export default function FormaApp() {
                 <button onClick={() => void loadHomeData()}>Повторить</button>
               </div>
             )}
+            {homeStatus === "loading" && (
+              <div className="active-workout-skeleton" aria-label="Загружается активная тренировка">
+                <span />
+                <span />
+                <span />
+              </div>
+            )}
             {homeStatus === "ready" && activeWorkoutId && (
-              <div className="active-workout-summary">
-                <span>
+              <button
+                ref={activeWorkoutCardRef}
+                className="active-workout-card"
+                disabled={discardingWorkout}
+                aria-label={`Посмотреть состав активной тренировки ${activeRoutineName || "Активная тренировка"}`}
+                onClick={openActiveWorkoutDetails}
+              >
+                <span className="active-workout-card-copy">
                   <small>Сейчас выполняется</small>
                   <strong>{activeRoutineName || "Активная тренировка"}</strong>
+                  <span>
+                    {activeResume && resumeExercise
+                      ? `Продолжим: ${resumeExercise.name} · подход ${activeResume.setNumber} из ${resumeExercise.sets}`
+                      : "Все подходы выполнены"}
+                  </span>
                 </span>
-                <i aria-hidden="true">{activeExercises[0]?.icon ?? "↗"}</i>
-              </div>
+                <i aria-hidden="true">›</i>
+              </button>
             )}
             <button
               ref={workoutPickerTriggerRef}
-              disabled={homeStatus !== "ready" || resumingWorkout || Boolean(startingRoutineId)}
+              disabled={homeStatus !== "ready" || resumingWorkout || Boolean(startingRoutineId) || discardingWorkout}
               className="primary-button"
               aria-describedby={homeStatus === "ready" && activeWorkoutId ? "active-workout-name" : undefined}
               onClick={homeStatus === "ready" && activeWorkoutId
@@ -1084,9 +1325,18 @@ export default function FormaApp() {
               {homeStatus === "ready" && activeWorkoutId ? "Продолжить тренировку" : "Начать тренировку"}
             </button>
             {homeStatus === "ready" && activeWorkoutId && (
-              <span id="active-workout-name" className="visually-hidden">
-                Активная тренировка: {activeRoutineName || "Активная тренировка"}
-              </span>
+              <>
+                <button
+                  className="discard-workout-link"
+                  disabled={discardingWorkout}
+                  onClick={() => openDiscardDialog(false)}
+                >
+                  Завершить без сохранения
+                </button>
+                <span id="active-workout-name" className="visually-hidden">
+                  Активная тренировка: {activeRoutineName || "Активная тренировка"}
+                </span>
+              </>
             )}
           </div>
         )}
@@ -1123,6 +1373,169 @@ export default function FormaApp() {
         )}
 
       </section>
+
+      {activeWorkoutDetailsOpen && activeWorkoutId && (
+        <div
+          className="modal-backdrop active-workout-overlay"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) closeActiveWorkoutDetails();
+          }}
+        >
+          <section
+            ref={activeWorkoutDetailsRef}
+            className="active-workout-details"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="active-workout-details-title"
+            aria-describedby="active-workout-details-summary"
+            tabIndex={-1}
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div
+              className="sheet-handle"
+              aria-hidden="true"
+              onPointerDown={startOverlayDrag}
+              onPointerUp={(event) => finishOverlayDrag(event, closeActiveWorkoutDetails)}
+            />
+            <div className="active-workout-details-heading">
+              <div>
+                <span className="eyebrow">Активная тренировка</span>
+                <h2
+                  ref={activeWorkoutDetailsTitleRef}
+                  id="active-workout-details-title"
+                  tabIndex={-1}
+                >
+                  {activeRoutineName || "Активная тренировка"}
+                </h2>
+                <p id="active-workout-details-summary">
+                  Выполнено {completedExerciseCount} из {activeExercises.length} упражнений
+                </p>
+              </div>
+              <button
+                className="sheet-close-button"
+                onClick={closeActiveWorkoutDetails}
+                aria-label="Закрыть состав"
+              >
+                ×
+              </button>
+            </div>
+            <div className="active-workout-exercise-list">
+              {activeExercises.map((exercise, index) => {
+                const state = activeExerciseStates[index];
+                return (
+                  <article
+                    key={`${exercise.key}:${index}`}
+                    className={`active-workout-exercise ${state}`}
+                    aria-label={state === "current" ? `Текущее упражнение. ${exercise.name}` : undefined}
+                  >
+                    <span className="active-exercise-mark" aria-hidden="true">
+                      {state === "completed" ? "✓" : index + 1}
+                    </span>
+                    <span className="exercise-icon" aria-hidden="true">{exercise.icon}</span>
+                    <span className="active-exercise-copy">
+                      <strong>{exercise.name}</strong>
+                      <small>
+                        {state === "completed" && "Выполнено"}
+                        {state === "current" && activeResume
+                          ? `Продолжим отсюда · подход ${activeResume.setNumber} из ${exercise.sets}`
+                          : null}
+                        {state === "upcoming"
+                          ? `${exercise.sets} × ${exercise.target} ${exercise.unit}`
+                          : null}
+                      </small>
+                    </span>
+                  </article>
+                );
+              })}
+            </div>
+            <div className="active-workout-details-actions">
+              <button
+                className="primary-button"
+                disabled={resumingWorkout || discardingWorkout}
+                onClick={() => {
+                  setActiveWorkoutDetailsOpen(false);
+                  if (window.history.state?.formaOverlay === "active-workout-details") {
+                    overlayHistoryDepthRef.current = 0;
+                    window.history.back();
+                  }
+                  void resumeWorkout();
+                }}
+              >
+                {activeResume
+                  ? `Продолжить: подход ${activeResume.setNumber}`
+                  : "Завершить тренировку"}
+              </button>
+              <button
+                className="discard-workout-link"
+                disabled={discardingWorkout}
+                onClick={() => openDiscardDialog(true)}
+              >
+                Завершить без сохранения
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {discardDialogOpen && discardWorkoutId && (
+        <div
+          className="modal-backdrop discard-workout-overlay"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) closeDiscardDialog();
+          }}
+        >
+          <section
+            ref={discardDialogRef}
+            className="discard-workout-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="discard-workout-title"
+            aria-describedby="discard-workout-description"
+            aria-busy={discardingWorkout}
+            tabIndex={-1}
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div
+              className="sheet-handle"
+              aria-hidden="true"
+              onPointerDown={startOverlayDrag}
+              onPointerUp={(event) => finishOverlayDrag(event, closeDiscardDialog)}
+            />
+            <span className="discard-workout-icon" aria-hidden="true">!</span>
+            <h2 id="discard-workout-title">Завершить тренировку?</h2>
+            <p id="discard-workout-description">
+              Текущий прогресс не сохранится в истории и статистике. Это действие нельзя отменить.
+            </p>
+            {discardWorkoutError && (
+              <p className="discard-workout-error" role="alert">{discardWorkoutError}</p>
+            )}
+            <div className="discard-workout-actions">
+              <button
+                className="danger-confirm-button"
+                disabled={discardingWorkout}
+                onClick={() => void discardActiveWorkout()}
+              >
+                {discardingWorkout
+                  ? "Завершаем…"
+                  : discardWorkoutError
+                    ? "Попробовать снова"
+                    : "Завершить без сохранения"}
+              </button>
+              <button
+                ref={discardSafeActionRef}
+                className="secondary-button"
+                disabled={discardingWorkout}
+                onClick={closeDiscardDialog}
+              >
+                Продолжить тренировку
+              </button>
+            </div>
+            <span className="visually-hidden" aria-live="polite">
+              {discardingWorkout ? "Завершение тренировки выполняется" : ""}
+            </span>
+          </section>
+        </div>
+      )}
 
       {workoutPickerOpen && (
         <div className="modal-backdrop workout-picker-backdrop" onMouseDown={(event) => {

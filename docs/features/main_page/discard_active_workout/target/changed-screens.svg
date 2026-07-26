@@ -1,0 +1,139 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1800" viewBox="0 0 1800 1800">
+  <defs>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%">
+      <feDropShadow dx="0" dy="24" stdDeviation="30" flood-color="#2c3128" flood-opacity=".18"/>
+    </filter>
+    <style>
+      text { font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill:#151714 }
+      .muted { fill:#747a70 }
+      .label { font-size:19px; font-weight:850 }
+      .small { font-size:15px }
+      .tiny { font-size:13px }
+      .card { fill:#fff; stroke:#dfe3d8; stroke-width:1.5 }
+      .phone { fill:#f5f7ef; stroke:#d2d6cd; stroke-width:1.5 }
+      .button { font-size:17px; font-weight:850; text-anchor:middle }
+      .row-title { font-size:15px; font-weight:750 }
+    </style>
+  </defs>
+  <rect width="1800" height="1800" fill="#e7eae2"/>
+  <circle cx="1650" cy="40" r="360" fill="#b5ff00" opacity=".13"/>
+  <text x="100" y="72" fill="#697064" font-size="14" font-weight="850" letter-spacing="2">FEATURE · DISCARD_ACTIVE_WORKOUT · V2</text>
+  <text x="100" y="124" font-size="40" font-weight="880" letter-spacing="-1.8">Активная тренировка на главной</text>
+  <text x="100" y="160" class="muted" font-size="20">Карточка, просмотр snapshot-состава и завершение без сохранения</text>
+
+  <text x="110" y="220" class="label">1. Контекст продолжения</text>
+  <text x="660" y="220" class="label">2. Состав тренировки</text>
+  <text x="1210" y="220" class="label">3. Подтверждение отказа</text>
+
+  <!-- Phone shells -->
+  <g filter="url(#shadow)">
+    <rect x="100" y="245" width="460" height="830" rx="38" class="phone"/>
+    <rect x="650" y="245" width="460" height="830" rx="38" class="phone"/>
+    <rect x="1200" y="245" width="460" height="830" rx="38" class="phone"/>
+  </g>
+
+  <!-- Shared left base -->
+  <text x="126" y="278" class="tiny" font-weight="850">9:41</text>
+  <text x="126" y="340" font-size="34" font-weight="880">Тренировки</text>
+  <rect x="496" y="300" width="45" height="45" rx="15" class="card"/>
+  <text x="518" y="329" font-size="19" text-anchor="middle">•••</text>
+  <rect x="126" y="375" width="197" height="132" rx="22" class="card"/>
+  <text x="147" y="423" font-size="42" font-weight="880">12</text>
+  <text x="147" y="451" class="muted small">Всего тренировок</text>
+  <rect x="337" y="375" width="197" height="132" rx="22" class="card"/>
+  <text x="358" y="423" font-size="42" font-weight="880">4</text>
+  <text x="358" y="451" class="muted small">Тренировок подряд</text>
+  <rect x="126" y="522" width="408" height="120" rx="22" class="card"/>
+  <text x="147" y="554" fill="#697064" class="tiny" font-weight="850" letter-spacing="1.4">ТЕКУЩИЙ ЦИКЛ</text>
+  <text x="147" y="586" font-size="22" font-weight="820">Тренировка 5 из 12</text>
+  <g transform="translate(147 606)">
+    <rect width="28" height="8" rx="4" fill="#aaf000"/><rect x="34" width="28" height="8" rx="4" fill="#aaf000"/>
+    <rect x="68" width="28" height="8" rx="4" fill="#aaf000"/><rect x="102" width="28" height="8" rx="4" fill="#aaf000"/>
+    <circle cx="145" cy="4" r="9" fill="#fff" stroke="#92df00" stroke-width="4"/>
+    <rect x="164" width="28" height="8" rx="4" fill="#e2e5df"/><rect x="198" width="28" height="8" rx="4" fill="#e2e5df"/>
+    <rect x="232" width="28" height="8" rx="4" fill="#e2e5df"/><rect x="266" width="28" height="8" rx="4" fill="#e2e5df"/>
+    <rect x="300" width="28" height="8" rx="4" fill="#e2e5df"/>
+  </g>
+  <rect x="126" y="657" width="408" height="115" rx="22" class="card"/>
+  <text x="147" y="692" font-size="16" font-weight="780">Прогресс с прошлой тренировки</text>
+  <text x="147" y="728" class="small">↟　Выходы силой: с резиной</text>
+  <text x="512" y="728" class="muted tiny" text-anchor="end">5 × 2 → 5 × 3</text>
+
+  <!-- Left active action -->
+  <line x1="100" y1="790" x2="560" y2="790" stroke="#dfe3d8"/>
+  <rect x="122" y="810" width="416" height="105" rx="18" class="card"/>
+  <text x="143" y="840" class="muted tiny">Сейчас выполняется</text>
+  <text x="143" y="869" font-size="19" font-weight="850">Push day</text>
+  <text x="143" y="896" class="muted tiny">Продолжим: брусья · подход 3 из 4</text>
+  <text x="518" y="878" font-size="40" font-weight="500" text-anchor="middle">›</text>
+  <rect x="122" y="932" width="416" height="58" rx="17" fill="#b5ff00"/>
+  <text x="330" y="968" class="button">Продолжить тренировку</text>
+  <text x="330" y="1030" fill="#c83d32" font-size="14" font-weight="800" text-anchor="middle">Завершить без сохранения</text>
+
+  <!-- Middle dimmed base -->
+  <text x="676" y="278" class="tiny" font-weight="850">9:41</text>
+  <text x="676" y="340" font-size="34" font-weight="880">Тренировки</text>
+  <rect x="650" y="245" width="460" height="830" rx="38" fill="#141712" opacity=".45"/>
+  <path d="M650 445 Q650 417 678 417 H1082 Q1110 417 1110 445 V1075 H650 Z" fill="#f5f7ef"/>
+  <rect x="855" y="432" width="50" height="5" rx="3" fill="#c7ccc1"/>
+  <text x="676" y="478" fill="#697064" class="tiny" font-weight="850" letter-spacing="1.5">АКТИВНАЯ ТРЕНИРОВКА</text>
+  <text x="676" y="519" font-size="30" font-weight="880">Push day</text>
+  <text x="676" y="548" class="muted small">Выполнено 2 из 5 упражнений</text>
+
+  <g>
+    <rect x="676" y="572" width="408" height="68" rx="15" class="card"/>
+    <rect x="690" y="590" width="31" height="31" rx="10" fill="#697064"/>
+    <text x="705" y="611" fill="#fff" class="tiny" font-weight="850" text-anchor="middle">✓</text>
+    <text x="735" y="598" class="row-title">Отжимания с резиной</text><text x="735" y="620" class="muted tiny">Выполнено</text>
+    <rect x="676" y="648" width="408" height="68" rx="15" class="card"/>
+    <rect x="690" y="666" width="31" height="31" rx="10" fill="#697064"/>
+    <text x="705" y="687" fill="#fff" class="tiny" font-weight="850" text-anchor="middle">✓</text>
+    <text x="735" y="674" class="row-title">Алмазные отжимания</text><text x="735" y="696" class="muted tiny">Выполнено</text>
+    <rect x="676" y="724" width="408" height="76" rx="15" fill="#f5ffe2" stroke="#92df00" stroke-width="2"/>
+    <rect x="690" y="746" width="31" height="31" rx="10" fill="#b5ff00"/>
+    <text x="705" y="767" class="tiny" font-weight="850" text-anchor="middle">3</text>
+    <text x="735" y="750" class="row-title">Отжимания на брусьях</text><text x="735" y="775" fill="#4d6500" class="tiny" font-weight="750">Продолжим отсюда · подход 3 из 4</text>
+    <rect x="676" y="808" width="408" height="68" rx="15" class="card"/>
+    <rect x="690" y="826" width="31" height="31" rx="10" fill="#eef1e9"/>
+    <text x="705" y="847" class="tiny" font-weight="850" text-anchor="middle">4</text>
+    <text x="735" y="834" class="row-title">Отжимания в стойке</text><text x="735" y="856" class="muted tiny">4 × 5 повторов</text>
+    <rect x="676" y="884" width="408" height="68" rx="15" class="card"/>
+    <rect x="690" y="902" width="31" height="31" rx="10" fill="#eef1e9"/>
+    <text x="705" y="923" class="tiny" font-weight="850" text-anchor="middle">5</text>
+    <text x="735" y="910" class="row-title">Планш</text><text x="735" y="932" class="muted tiny">3 × 10 сек</text>
+  </g>
+  <rect x="676" y="969" width="408" height="58" rx="17" fill="#b5ff00"/>
+  <text x="880" y="1005" class="button">Продолжить: подход 3</text>
+  <text x="880" y="1053" fill="#c83d32" font-size="14" font-weight="800" text-anchor="middle">Завершить без сохранения</text>
+
+  <!-- Right dimmed base and confirm -->
+  <text x="1226" y="278" class="tiny" font-weight="850">9:41</text>
+  <text x="1226" y="340" font-size="34" font-weight="880">Тренировки</text>
+  <rect x="1200" y="245" width="460" height="830" rx="38" fill="#141712" opacity=".48"/>
+  <path d="M1200 625 Q1200 597 1228 597 H1632 Q1660 597 1660 625 V1075 H1200 Z" fill="#f5f7ef"/>
+  <rect x="1405" y="612" width="50" height="5" rx="3" fill="#c7ccc1"/>
+  <rect x="1226" y="650" width="50" height="50" rx="15" fill="#fff1ef"/>
+  <text x="1251" y="684" fill="#c83d32" font-size="25" font-weight="900" text-anchor="middle">!</text>
+  <text x="1226" y="748" font-size="30" font-weight="880">Завершить тренировку?</text>
+  <text x="1226" y="787" class="muted small">Текущий прогресс не сохранится</text>
+  <text x="1226" y="813" class="muted small">в истории и статистике.</text>
+  <text x="1226" y="839" class="muted small">Это действие нельзя отменить.</text>
+  <rect x="1226" y="878" width="408" height="64" rx="18" fill="#c83d32"/>
+  <text x="1430" y="917" fill="#fff" class="button">Завершить без сохранения</text>
+  <rect x="1226" y="957" width="408" height="64" rx="18" class="card"/>
+  <text x="1430" y="996" class="button">Продолжить тренировку</text>
+
+  <!-- Notes -->
+  <rect x="105" y="1125" width="450" height="74" rx="15" fill="#fff" opacity=".62"/>
+  <rect x="105" y="1125" width="5" height="74" fill="#b5ff00"/>
+  <text x="128" y="1155" class="muted small">Точка продолжения видна до перехода</text>
+  <text x="128" y="1180" class="muted small">в экран упражнения.</text>
+  <rect x="655" y="1125" width="450" height="74" rx="15" fill="#fff" opacity=".62"/>
+  <rect x="655" y="1125" width="5" height="74" fill="#b5ff00"/>
+  <text x="678" y="1155" class="muted small">Список отражает snapshot и не позволяет</text>
+  <text x="678" y="1180" class="muted small">перескочить к будущему упражнению.</text>
+  <rect x="1205" y="1125" width="450" height="74" rx="15" fill="#fff" opacity=".62"/>
+  <rect x="1205" y="1125" width="5" height="74" fill="#b5ff00"/>
+  <text x="1228" y="1155" class="muted small">Необратимое действие подтверждается</text>
+  <text x="1228" y="1180" class="muted small">отдельно от просмотра состава.</text>
+</svg>
