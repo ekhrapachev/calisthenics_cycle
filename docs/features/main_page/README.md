@@ -15,6 +15,7 @@ docs/features/main_page/<feature_slug>/
 |---|---|---|
 | [quick_start_workout](quick_start_workout/) | IMPLEMENTED локально | Быстрый запуск и продолжение тренировки с главной |
 | [discard_active_workout](discard_active_workout/) | IMPLEMENTED локально · v2 | Карточка активной тренировки, просмотр состава, точное продолжение и отказ без сохранения |
+| [direct_home_navigation](direct_home_navigation/) | SPECIFIED · PROTOTYPED | Прямые переходы с главной в историю, конструктор тренировок и профиль |
 
 ## Именование
 

@@ -156,7 +156,6 @@ export default function FormaApp() {
   const [name, setName] = useState("");
   const [gender, setGender] = useState("unspecified");
   const [birthDate, setBirthDate] = useState("");
-  const [homeMenuOpen, setHomeMenuOpen] = useState(false);
   const [homeStatus, setHomeStatus] = useState<"loading" | "ready" | "error">("loading");
   const [homeError, setHomeError] = useState("");
   const [routines, setRoutines] = useState<Routine[]>([]);
@@ -901,9 +900,9 @@ export default function FormaApp() {
 
   const isHome = screen === "home";
   const headerTitle =
-    screen === "routines" ? "Мои тренировки"
+    screen === "routines" ? "Конструктор тренировок"
       : screen === "routine" ? selectedRoutine?.name ?? "Набор"
-        : screen === "routineEdit" ? (draft?.id ? "Редактирование" : "Новый набор")
+        : screen === "routineEdit" ? (draft?.id ? "Редактирование" : "Новая тренировка")
           : screen === "exercise" || screen === "rest" ? activeRoutineName
             : screen === "summary" ? "Готово"
               : screen === "history" ? "История"
@@ -938,23 +937,25 @@ export default function FormaApp() {
             <button className="icon-button" onClick={goBack} aria-label="Назад">←</button>
           )}
           {isHome ? (
-            <div className="home-menu-wrap">
-              <button
-                className="icon-button more-button"
-                onClick={() => setHomeMenuOpen((value) => !value)}
-                aria-label="Открыть меню"
-                aria-expanded={homeMenuOpen}
+            <button
+              className="icon-button profile-button"
+              onClick={() => setScreen("profile")}
+              aria-label="Открыть профиль"
+            >
+              <svg
+                aria-hidden="true"
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
               >
-                <span /><span /><span />
-              </button>
-              {homeMenuOpen && (
-                <div className="home-menu">
-                  <button onClick={() => { setScreen("routines"); setHomeMenuOpen(false); }}>Мои тренировки</button>
-                  <button onClick={() => { setScreen("history"); setHomeMenuOpen(false); }}>История</button>
-                  <button onClick={() => { setScreen("profile"); setHomeMenuOpen(false); }}>Профиль</button>
-                </div>
-              )}
-            </div>
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4.8 21a7.2 7.2 0 0 1 14.4 0" />
+              </svg>
+            </button>
           ) : (
             <strong className="topbar-title">{headerTitle}</strong>
           )}
@@ -964,11 +965,15 @@ export default function FormaApp() {
           {screen === "home" && (
             <div className="screen-stack home-dashboard">
               <div className="home-stat-grid">
-                <article className="home-stat-card">
+                <button
+                  className="home-stat-card history-stat-card"
+                  onClick={() => setScreen("history")}
+                  aria-label={`Открыть историю тренировок, всего ${stats.total}`}
+                >
                   <strong>{stats.total}</strong>
                   <span>Всего тренировок</span>
-                  <button onClick={() => setScreen("history")}>История <i>→</i></button>
-                </article>
+                  <span className="nav-chevron history-chevron" aria-hidden="true">›</span>
+                </button>
                 <article className="home-stat-card streak-card">
                   <strong>{stats.streak}</strong>
                   <span>Тренировок<br />подряд</span>
@@ -1011,15 +1016,24 @@ export default function FormaApp() {
                 </div>
               </section>
 
+              <button
+                className="constructor-card"
+                onClick={() => setScreen("routines")}
+                aria-label="Открыть конструктор тренировок"
+              >
+                <span className="constructor-icon" aria-hidden="true">⌘</span>
+                <strong>Конструктор тренировок</strong>
+                <span className="nav-chevron" aria-hidden="true">›</span>
+              </button>
             </div>
           )}
 
           {screen === "routines" && (
             <div className="screen-stack routines-screen">
               <div className="page-title">
-                <span className="eyebrow">Конструктор</span>
-                <h1>Мои тренировки</h1>
-                <p>Собери тренировку под себя</p>
+                <span className="eyebrow">Твои программы</span>
+                <h1>Конструктор тренировок</h1>
+                <p>Создавай и настраивай тренировки под себя</p>
               </div>
               {routines.length > 0 ? (
                 <div className="routine-card-list">
@@ -1031,7 +1045,7 @@ export default function FormaApp() {
                         <small>{exerciseCountLabel(routine.exerciseKeys.length)} · {routine.durationMinutes} мин</small>
                         <i className={`difficulty ${routine.difficulty}`}>{difficultyLabel[routine.difficulty]}</i>
                       </span>
-                      <span className="routine-arrow">›</span>
+                      <span className="nav-chevron" aria-hidden="true">›</span>
                     </button>
                   ))}
                 </div>
@@ -1342,7 +1356,7 @@ export default function FormaApp() {
         )}
         {screen === "routines" && (
           <div className="screen-action">
-            <button className="primary-button" onClick={() => createRoutine("routines")}>＋ Новый набор</button>
+            <button className="primary-button" onClick={() => createRoutine("routines")}>＋ Новая тренировка</button>
           </div>
         )}
         {screen === "routine" && selectedRoutine && (
@@ -1553,7 +1567,7 @@ export default function FormaApp() {
             <div className="workout-picker-heading">
               <div>
                 <h2 id="workout-picker-title">Выбери тренировку</h2>
-                <p>Нажми на набор, чтобы сразу начать.</p>
+                <p>Нажми на тренировку, чтобы сразу начать.</p>
               </div>
               <button className="sheet-close-button" onClick={closeWorkoutPicker} aria-label="Закрыть">×</button>
             </div>
@@ -1587,7 +1601,7 @@ export default function FormaApp() {
             ) : (
               <div className="workout-picker-empty">
                 <strong>У вас пока нет тренировок</strong>
-                <p>Создайте первый набор упражнений, чтобы начать.</p>
+                <p>Создайте первую тренировку, чтобы начать.</p>
               </div>
             )}
             <button
@@ -1599,7 +1613,7 @@ export default function FormaApp() {
                 else setScreen("routines");
               }}
             >
-              {routines.length > 0 ? "Управлять наборами" : "Создать тренировку"}
+              {routines.length > 0 ? "Управлять тренировками" : "Создать тренировку"}
             </button>
           </section>
         </div>
