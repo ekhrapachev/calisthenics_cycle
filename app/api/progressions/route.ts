@@ -27,10 +27,20 @@ export async function PUT(request: Request) {
   const workoutType = body?.workoutType ?? "";
   const exerciseKey = body?.exerciseKey?.trim() ?? "";
   const progression = body?.progression?.trim() ?? "";
-  if (!["push", "pull"].includes(workoutType) || !exerciseKey || !progression) {
+  const routineId = workoutType.startsWith("routine:") ? workoutType.slice("routine:".length) : "";
+  if ((!["push", "pull"].includes(workoutType) && !routineId) || !exerciseKey || !progression) {
     return json({ error: "Некорректная прогрессия" }, 400);
   }
   await ensureDatabase();
+  if (routineId) {
+    const exercise = await env.DB.prepare(
+      `SELECT re.exercise_key
+       FROM workout_routine_exercises re
+       INNER JOIN workout_routines r ON r.id = re.routine_id
+       WHERE r.id = ?1 AND r.user_id = ?2 AND re.exercise_key = ?3`,
+    ).bind(routineId, user.id, exerciseKey).first();
+    if (!exercise) return json({ error: "Упражнение не найдено в наборе" }, 404);
+  }
   await env.DB.prepare(
     `INSERT INTO progression_selections (user_id, workout_type, exercise_key, progression, updated_at)
      VALUES (?1, ?2, ?3, ?4, ?5)

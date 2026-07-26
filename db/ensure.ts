@@ -37,6 +37,27 @@ const statements = [
     updated_at INTEGER NOT NULL,
     PRIMARY KEY(user_id, workout_type, exercise_key)
   )`,
+  `CREATE TABLE IF NOT EXISTS workout_routine_profiles (
+    user_id TEXT PRIMARY KEY NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    initialized_at INTEGER NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS workout_routines (
+    id TEXT PRIMARY KEY NOT NULL,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    duration_minutes INTEGER NOT NULL,
+    difficulty TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS workout_routines_user_idx ON workout_routines(user_id, created_at ASC)`,
+  `CREATE TABLE IF NOT EXISTS workout_routine_exercises (
+    routine_id TEXT NOT NULL REFERENCES workout_routines(id) ON DELETE CASCADE,
+    exercise_key TEXT NOT NULL,
+    position INTEGER NOT NULL,
+    PRIMARY KEY(routine_id, exercise_key)
+  )`,
+  `CREATE INDEX IF NOT EXISTS workout_routine_exercises_order_idx ON workout_routine_exercises(routine_id, position ASC)`,
   `CREATE TABLE IF NOT EXISTS workout_sessions (
     id TEXT PRIMARY KEY NOT NULL,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -47,6 +68,15 @@ const statements = [
     duration_seconds INTEGER
   )`,
   `CREATE INDEX IF NOT EXISTS workout_sessions_user_idx ON workout_sessions(user_id, started_at DESC)`,
+  `CREATE TABLE IF NOT EXISTS workout_session_snapshots (
+    workout_session_id TEXT PRIMARY KEY NOT NULL REFERENCES workout_sessions(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    routine_id TEXT,
+    routine_name TEXT NOT NULL,
+    duration_minutes INTEGER NOT NULL,
+    difficulty TEXT NOT NULL,
+    exercises_json TEXT NOT NULL
+  )`,
   `CREATE TABLE IF NOT EXISTS workout_sets (
     id TEXT PRIMARY KEY NOT NULL,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
